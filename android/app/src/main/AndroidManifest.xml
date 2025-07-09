@@ -31,16 +31,12 @@
             android:name=".activity.AlarmActivity"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
-            android:exported="false" />
+            android:exported="false"
+            android:launchMode="singleTop" />
         <activity
             android:name=".activity.GameActivity"
-            android:exported="false" />
-        <!-- Activity used to display Flutter content when launched from AlarmActivity -->
-        <activity
-            android:name="io.flutter.embedding.android.FlutterActivity"
             android:exported="false"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true" />
+            android:launchMode="singleTop" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
