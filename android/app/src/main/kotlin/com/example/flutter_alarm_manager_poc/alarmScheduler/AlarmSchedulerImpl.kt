@@ -13,7 +13,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
 
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    override fun schedule(alarmItem: AlarmItem, delaySeconds: Int = 10) {
+    override fun schedule(alarmItem: AlarmItem, delaySeconds: Int) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
                 Log.e("AlarmSchedulerImpl", "Cannot schedule exact alarms. Missing permission.")
