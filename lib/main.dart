@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_alarm_manager_poc/alarm_manager_screen.dart';
 import 'package:flutter_alarm_manager_poc/alarm_screen.dart';
 import 'package:flutter_alarm_manager_poc/game_screen.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        initialRoute: '/',
+        initialRoute: window.defaultRouteName,
         routes: {
           '/': (context) => const AlarmManagerScreen(),
           '/alarm': (context) {

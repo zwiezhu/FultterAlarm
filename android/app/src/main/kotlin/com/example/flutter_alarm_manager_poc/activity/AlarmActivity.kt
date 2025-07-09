@@ -79,7 +79,7 @@ class AlarmActivity : ComponentActivity() {
                             val gameIntent =
                                 FlutterActivity.withCachedEngine(ENGINE_ID)
                                     .build(this@AlarmActivity)
-                            startActivity(gameIntent)
+                            startActivity(FlutterActivity.withNewEngine().initialRoute("/game").build(this))
                             finish()
                         },
                         onSnooze = {
