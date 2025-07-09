@@ -2,6 +2,7 @@ package com.example.flutter_alarm_manager_poc.activity
 
 import android.os.Bundle
 import android.content.Intent
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +13,7 @@ import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
 import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import com.example.flutter_alarm_manager_poc.screens.AlarmScreen
+import com.example.flutter_alarm_manager_poc.activity.GameActivity
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -23,6 +25,7 @@ import io.flutter.plugin.common.MethodChannel
 class AlarmActivity : ComponentActivity() {
     private val ENGINE_ID = "alarm_manager_engine"
     private val CHANNEL = "com.example/alarm_manager"
+    private val TAG = "AlarmActivity"
     private var flutterEngine: FlutterEngine? = null
     private var isNewEngineCreated = false // create new engine when app is closed and use existing when app is resumed state
     private lateinit var alarmNotificationService: AlarmNotificationService
@@ -45,6 +48,7 @@ class AlarmActivity : ComponentActivity() {
 
         if (flutterEngine == null) {
             // If no cached engine is found (app was killed), create a new one
+            Log.d(TAG, "Creating new Flutter engine")
             flutterEngine = FlutterEngine(this).apply {
                 dartExecutor.executeDartEntrypoint(
                     DartExecutor.DartEntrypoint.createDefault()
@@ -53,6 +57,8 @@ class AlarmActivity : ComponentActivity() {
             // Optionally, cache this new engine if needed later
             FlutterEngineCache.getInstance().put(ENGINE_ID, flutterEngine)
             isNewEngineCreated = true;
+        } else {
+            Log.d(TAG, "Using cached Flutter engine")
         }
 
         // Set up the MethodChannel
@@ -64,14 +70,17 @@ class AlarmActivity : ComponentActivity() {
                 Surface(color = MaterialTheme.colorScheme.onSurface) {
                     AlarmScreen(
                         onPlay = {
+                            Log.d(TAG, "Play button clicked")
                             channel.invokeMethod("alarmAccepted", null)
                             alarmNotificationService.cancelNotification(alarmId)
-                            startActivity(FlutterActivity.withCachedEngine(ENGINE_ID).build(this).apply { 
-                                putExtra("route", "/game")
-                            })
+                            
+                            // Launch GameActivity instead of Flutter activity
+                            val gameIntent = Intent(this@AlarmActivity, GameActivity::class.java)
+                            startActivity(gameIntent)
                             finish()
                         },
                         onSnooze = {
+                            Log.d(TAG, "Snooze button clicked")
                             channel.invokeMethod("alarmSnoozed", null)
                             snoozeAlarm()
                             alarmNotificationService.cancelNotification(alarmId)
@@ -99,6 +108,7 @@ class AlarmActivity : ComponentActivity() {
         // Only destroy the engine when the notification activity is launched from killed state
         // Do not kill the engine when the app is in running state otherwise it will lead to multiple flutter main-call stacks.
         if (isNewEngineCreated) {
+            Log.d(TAG, "Destroying Flutter engine")
             flutterEngine?.destroy()
             FlutterEngineCache.getInstance().remove(ENGINE_ID)
         }
