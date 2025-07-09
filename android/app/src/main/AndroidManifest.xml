@@ -35,6 +35,10 @@
         <activity
             android:name=".activity.GameActivity"
             android:exported="false" />
+        <!-- Used when launching a FlutterActivity with a cached engine -->
+        <activity
+            android:name="io.flutter.embedding.android.FlutterActivity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
