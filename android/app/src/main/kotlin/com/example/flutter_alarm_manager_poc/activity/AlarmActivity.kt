@@ -73,9 +73,11 @@ class AlarmActivity : ComponentActivity() {
                             alarmNotificationService.cancelNotification(alarmId)
                             
                             // Launch Flutter game screen using the cached engine
+                            // Since initialRoute can't be set on a cached engine,
+                            // push the desired route before launching the activity
+                            flutterEngine?.navigationChannel?.pushRoute("/game")
                             val gameIntent =
                                 FlutterActivity.withCachedEngine(ENGINE_ID)
-                                    .initialRoute("/game")
                                     .build(this@AlarmActivity)
                             startActivity(gameIntent)
                             finish()
