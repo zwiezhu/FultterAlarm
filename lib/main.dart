@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
             final alarmTime = args['alarmTime'] as DateTime;
             return AlarmScreen(
               onPlay: () {
-                // This will be handled by the platform channel
+                Navigator.pushNamed(context, '/game');
               },
               onSnooze: () {
                 // This will be handled by the platform channel
