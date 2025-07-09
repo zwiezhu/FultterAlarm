@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_alarm_manager_poc/alarm_manager_screen.dart';
+import 'package:flutter_alarm_manager_poc/alarm_screen.dart';
+import 'package:flutter_alarm_manager_poc/game_screen.dart';
 import 'package:flutter_alarm_manager_poc/hive/service/database_service.dart';
 import 'utils/alarm_method_channel.dart';
 
@@ -27,6 +29,24 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: const AlarmManagerScreen());
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const AlarmManagerScreen(),
+          '/alarm': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final alarmTime = args['alarmTime'] as DateTime;
+            return AlarmScreen(
+              onPlay: () {
+                // This will be handled by the platform channel
+              },
+              onSnooze: () {
+                // This will be handled by the platform channel
+              },
+              alarmTime: alarmTime,
+            );
+          },
+          '/game': (context) => const GameScreen(),
+        },
+      );
   }
 }

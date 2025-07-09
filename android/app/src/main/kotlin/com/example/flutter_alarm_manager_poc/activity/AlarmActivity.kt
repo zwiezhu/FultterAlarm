@@ -1,6 +1,7 @@
 package com.example.flutter_alarm_manager_poc.activity
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +12,7 @@ import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
 import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import com.example.flutter_alarm_manager_poc.screens.AlarmScreen
+
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -30,6 +32,7 @@ class AlarmActivity : ComponentActivity() {
         actionBar?.hide()
 
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        val alarmTime = intent.getLongExtra("ALARM_TIME", System.currentTimeMillis())
 
 
         alarmNotificationService = AlarmNotificationServiceImpl(this)
@@ -59,9 +62,12 @@ class AlarmActivity : ComponentActivity() {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.onSurface) {
                     AlarmScreen(
-                        onAccept = {
+                        onPlay = {
                             channel.invokeMethod("alarmAccepted", null)
                             alarmNotificationService.cancelNotification(alarmId)
+                            startActivity(FlutterActivity.withCachedEngine(ENGINE_ID).build(this).apply { 
+                                putExtra("route", "/game")
+                            })
                             finish()
                         },
                         onSnooze = {
@@ -69,7 +75,8 @@ class AlarmActivity : ComponentActivity() {
                             snoozeAlarm()
                             alarmNotificationService.cancelNotification(alarmId)
                             finish()
-                        }
+                        },
+                        alarmTime = alarmTime
                     )
                 }
             }
@@ -82,7 +89,7 @@ class AlarmActivity : ComponentActivity() {
             id = 1,
             message = "Alarm has been ringing"
         )
-        alarmScheduler.schedule(alarmItem)
+        alarmScheduler.schedule(alarmItem, 60)
     }
 
     override fun onDestroy() {
