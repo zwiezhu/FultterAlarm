@@ -1,5 +1,7 @@
 package com.example.flutter_alarm_manager_poc.alarmNotificationService
 
+import android.media.AudioAttributes
+import android.net.Uri
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -33,6 +35,13 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 enableLights(true)
                 enableVibration(true)
+
+                val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build()
+                setSound(soundUri, audioAttributes)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -52,6 +61,8 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
+
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.notification_bell)
             .setContentTitle("Alarm")
@@ -61,6 +72,7 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .setOngoing(true) // to make the notification persistent
             .setAutoCancel(false) // to prevent the notification from being dismissed
+            .setSound(soundUri)
 
 
         val notification = notificationBuilder.build().apply {
@@ -68,7 +80,6 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
             // flags = flags or Notification.FLAG_INSISTENT or Notification.FLAG_NO_CLEAR
         }
 
-        notificationManager.cancel(alarmItem.id)
         notificationManager.notify(alarmItem.id, notification)
     }
 

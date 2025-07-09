@@ -11,21 +11,37 @@ class AlarmManagerScreen extends StatefulWidget {
 }
 
 class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
+  bool _isRequestingPermission = false;
+
   Future<void> _requestNotificationPermission() async {
-    final status = await Permission.notification.request();
+    if (_isRequestingPermission) return;
 
-    // Sprawdź czy widget jest nadal mounted
-    if (!mounted) return;
+    setState(() {
+      _isRequestingPermission = true;
+    });
 
-    if (status.isGranted) {
-      await AlarmMethodChannel.scheduleAlarm();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-          Text('Notification permission is required to schedule alarms.'),
-        ),
-      );
+    try {
+      final status = await Permission.notification.request();
+
+      // Sprawdź czy widget jest nadal mounted
+      if (!mounted) return;
+
+      if (status.isGranted) {
+        await AlarmMethodChannel.scheduleAlarm();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Notification permission is required to schedule alarms.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRequestingPermission = false;
+        });
+      }
     }
   }
 
@@ -49,9 +65,11 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
       ),
       body: Center(
         child: ElevatedButton(
-            onPressed: () async {
-              await _requestNotificationPermission();
-            },
+            onPressed: _isRequestingPermission
+                ? null
+                : () async {
+                    await _requestNotificationPermission();
+                  },
             child: const Text("Schedule Alarm")),
       ),
     );
