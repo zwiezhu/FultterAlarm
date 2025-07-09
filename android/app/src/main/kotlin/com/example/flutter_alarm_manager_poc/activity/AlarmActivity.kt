@@ -1,7 +1,6 @@
 package com.example.flutter_alarm_manager_poc.activity
 
 import android.os.Bundle
-import android.content.Intent
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,7 +12,6 @@ import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
 import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import com.example.flutter_alarm_manager_poc.screens.AlarmScreen
-import com.example.flutter_alarm_manager_poc.activity.GameActivity
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -74,8 +72,11 @@ class AlarmActivity : ComponentActivity() {
                             channel.invokeMethod("alarmAccepted", null)
                             alarmNotificationService.cancelNotification(alarmId)
                             
-                            // Launch GameActivity instead of Flutter activity
-                            val gameIntent = Intent(this@AlarmActivity, GameActivity::class.java)
+                            // Launch Flutter game screen using the cached engine
+                            val gameIntent =
+                                FlutterActivity.withCachedEngine(ENGINE_ID)
+                                    .initialRoute("/game")
+                                    .build(this@AlarmActivity)
                             startActivity(gameIntent)
                             finish()
                         },
