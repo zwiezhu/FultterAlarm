@@ -48,7 +48,6 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   Timer? _gameLoopTimer;
 
   Size? _screenSize;
-  bool _gameInitialized = false;
 
   @override
   void initState() {
@@ -58,7 +57,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
         setState(() {
           _screenSize = MediaQuery.of(context).size;
         });
-        // resetGame() will now be called from build method once _screenSize is available
+        resetGame();
       }
     });
   }
@@ -167,11 +166,6 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
       );
     }
 
-    // Call resetGame only once after _screenSize is initialized
-    if (!_gameInitialized) {
-      _gameInitialized = true;
-      resetGame();
-    }
 
     final gameWidth = _screenSize!.width - 40;
 
