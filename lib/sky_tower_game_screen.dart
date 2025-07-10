@@ -178,7 +178,9 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
     }
 
 
-    final gameWidth = _screenSize!.width;
+    final mediaQuery = MediaQuery.of(context);
+    final gameWidth = mediaQuery.size.width;
+    final gameHeight = mediaQuery.size.height - mediaQuery.padding.bottom;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f0f),
@@ -191,7 +193,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
               alignment: Alignment.center,
               child: Container(
                 width: gameWidth,
-                height: _screenSize!.height,
+                height: gameHeight,
                 color: const Color(0xFF1a1a1a),
                 child: Stack(
                   clipBehavior: Clip.none,
