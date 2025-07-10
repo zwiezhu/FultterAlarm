@@ -48,29 +48,21 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   Timer? _gameLoopTimer;
 
   Size? _screenSize;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newSize = MediaQuery.of(context).size;
-    if (_screenSize == null || _screenSize != newSize) {
-      _screenSize = newSize;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          resetGame();
-        }
-      });
-    }
-  }
+  bool _gameInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _screenSize != null) {
-        resetGame();
-      }
-    });
+    // Initialize _screenSize directly in initState
+    _screenSize = WidgetsBinding.instance.window.physicalSize / WidgetsBinding.instance.window.devicePixelRatio;
+    resetGame();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // No need to re-initialize _screenSize here unless it changes, which is rare.
+    // If you need to react to size changes, you can do it here.
   }
 
   void resetGame() {
@@ -170,19 +162,8 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_screenSize == null) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-
     final mediaQuery = MediaQuery.of(context);
     final gameWidth = mediaQuery.size.width;
-    // Use the full height minus the top padding. The bottom padding
-    // will be handled by explicit padding to keep the ground visible
-    // on devices with system navigation bars.
     final gameHeight = mediaQuery.size.height - mediaQuery.padding.top;
 
     return Scaffold(
@@ -201,43 +182,44 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
                   height: gameHeight,
                   color: const Color(0xFF1a1a1a),
                   child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Tower Blocks
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 500),
-                        transform: Matrix4.translationValues(0, -cameraY, 0),
-                        child: Stack(
-                          children: blocks.map((block) {
-                            return Positioned(
-                              bottom: (block.id * blockHeight),
-                              left: block.x,
-                              child: Container(
-                                width: block.width,
-                                height: blockHeight,
-                                color: block.color,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                    // Current Moving Block
-                    if (currentBlock != null && !gameOver)
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Tower Blocks
                       Positioned(
-                        bottom: (blocks.length * blockHeight) - cameraY,
-                        left: currentBlockX,
-                        child: Container(
-                          width: currentBlock!.width,
-                          height: blockHeight,
-                          color: currentBlock!.color,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 500),
+                          transform: Matrix4.translationValues(0, -cameraY, 0),
+                          child: Stack(
+                            children: blocks.map((block) {
+                              return Positioned(
+                                bottom: (block.id * blockHeight),
+                                left: block.x,
+                                child: Container(
+                                  width: block.width,
+                                  height: blockHeight,
+                                  color: block.color,
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
-                  ],
+                      // Current Moving Block
+                      if (currentBlock != null && !gameOver)
+                        Positioned(
+                          bottom: (blocks.length * blockHeight) - cameraY,
+                          left: currentBlockX,
+                          child: Container(
+                            width: currentBlock!.width,
+                            height: blockHeight,
+                            color: currentBlock!.color,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
