@@ -638,21 +638,3 @@ class GamePainter extends CustomPainter {
 }
 
 // Example usage
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Wall Bounce Game',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const Scaffold(
-        body: WallBounceGame(casualMode: true),
-      ),
-    );
-  }
-}
-
-void main() {
-  runApp(MyApp());
-}
