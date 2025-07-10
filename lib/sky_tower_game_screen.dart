@@ -55,7 +55,9 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _screenSize = MediaQuery.of(context).size;
+        setState(() {
+          _screenSize = MediaQuery.of(context).size;
+        });
         // resetGame() will now be called from build method once _screenSize is available
       }
     });
