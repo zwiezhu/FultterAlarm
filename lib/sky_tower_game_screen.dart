@@ -53,9 +53,15 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize _screenSize directly in initState
-    _screenSize = WidgetsBinding.instance.window.physicalSize / WidgetsBinding.instance.window.devicePixelRatio;
-    resetGame();
+    // Obtain screen size after first frame so MediaQuery is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _screenSize = MediaQuery.of(context).size;
+        });
+        resetGame();
+      }
+    });
   }
 
   @override
