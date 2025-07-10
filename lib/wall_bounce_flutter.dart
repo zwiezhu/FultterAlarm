@@ -497,61 +497,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
                         ),
                       ),
                     
-                    // Instructions
-                    if (!gameStarted)
-                      Positioned(
-                        bottom: 40,
-                        left: 16,
-                        right: 16,
-                        child: Center(
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 300),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '🎮 Wall Bounce',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Tap to jump between walls',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFFD1D5DB),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  'Tap mid-air to change direction',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFFD1D5DB),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Collect 💎 green diamonds\nAvoid ⚠️ red obstacles',
-                                  style: TextStyle(
-                                    color: Color(0xFF34D399),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    // No start instructions overlay
                   ],
                 ),
               ),
