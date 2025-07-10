@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:math';
 
@@ -24,7 +23,8 @@ class SkyTowerGameScreen extends StatefulWidget {
 class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   // Game constants
   static const double initialBlockWidth = 120;
-  static const double blockHeight = 20;
+  static const double blockHeight = 30;
+  static const double groundHeight = 40;
   final List<Color> blockColors = [
     const Color(0xFFff6b6b),
     const Color(0xFF4ecdc4),
@@ -48,7 +48,6 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   Timer? _gameLoopTimer;
 
   Size? _screenSize;
-  bool _gameInitialized = false;
 
   @override
   void initState() {
@@ -64,15 +63,8 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // No need to re-initialize _screenSize here unless it changes, which is rare.
-    // If you need to react to size changes, you can do it here.
-  }
-
   void resetGame() {
-    if (_screenSize == null) return; // Ensure _screenSize is initialized
+    if (_screenSize == null) return;
     final gameWidth = _screenSize!.width;
     setState(() {
       blocks = [Block(id: 0, width: initialBlockWidth, x: (gameWidth - initialBlockWidth) / 2, color: blockColors[0])];
@@ -95,7 +87,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
       currentBlock = Block(
         id: blocks.length,
         width: newWidth,
-        x: 0, // This x is for the model, the animated x is currentBlockX
+        x: 0,
         color: blockColors[blocks.length % blockColors.length],
       );
       currentBlockX = random.nextBool() ? 0 : gameWidth - newWidth;
@@ -114,9 +106,9 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
     setState(() {
       currentBlockX += direction * currentSpeed;
-      final max_X = gameWidth - currentBlock!.width;
-      if (currentBlockX >= max_X) {
-        currentBlockX = max_X;
+      final maxX = gameWidth - currentBlock!.width;
+      if (currentBlockX >= maxX) {
+        currentBlockX = maxX;
         direction = -1;
       } else if (currentBlockX <= 0) {
         currentBlockX = 0;
@@ -127,8 +119,6 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
   void _dropBlock() {
     if (currentBlock == null || gameOver || isPaused || _screenSize == null) return;
-
-    final gameWidth = _screenSize!.width;
 
     final lastBlock = blocks.last;
     final overlap = max(0.0, min(lastBlock.x + lastBlock.width, currentBlockX + currentBlock!.width) - max(lastBlock.x, currentBlockX));
@@ -151,8 +141,10 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
       blocks.add(newBlock);
       score += (overlap * 10).round();
       currentBlock = null;
-      if (blocks.length > 8) {
-        cameraY = (blocks.length - 8) * blockHeight;
+
+      // Update camera to keep tower visible
+      if (blocks.length > 6) {
+        cameraY = (blocks.length - 6) * blockHeight;
       }
     });
 
@@ -179,56 +171,108 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
         child: Stack(
           children: [
             // Game Area
-            Padding(
-              padding: EdgeInsets.only(bottom: mediaQuery.padding.bottom),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: gameWidth,
-                  height: gameHeight,
-                  color: const Color(0xFF1a1a1a),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Tower Blocks
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
-                          transform: Matrix4.translationValues(0, -cameraY, 0),
-                          child: Stack(
-                            children: blocks.map((block) {
-                              return Positioned(
-                                bottom: (block.id * blockHeight),
-                                left: block.x,
-                                child: Container(
-                                  width: block.width,
-                                  height: blockHeight,
-                                  color: block.color,
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                      // Current Moving Block
-                      if (currentBlock != null && !gameOver)
+            Container(
+              width: gameWidth,
+              height: gameHeight,
+              color: const Color(0xFF1a1a1a),
+              child: Stack(
+                children: [
+                  // Game area with tower
+                  Positioned.fill(
+                    child: Stack(
+                      children: [
+                        // Ground - always at bottom
                         Positioned(
-                          bottom: (blocks.length * blockHeight) - cameraY,
-                          left: currentBlockX,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
                           child: Container(
-                            width: currentBlock!.width,
-                            height: blockHeight,
-                            color: currentBlock!.color,
+                            height: groundHeight,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2d2d2d),
+                              border: Border(
+                                top: BorderSide(color: Colors.white24, width: 2),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'GROUND',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                    ],
+
+                        // Tower blocks - positioned above ground
+                        ...blocks.map((block) {
+                          return Positioned(
+                            bottom: groundHeight + (block.id * blockHeight) - cameraY,
+                            left: block.x,
+                            child: Container(
+                              width: block.width,
+                              height: blockHeight,
+                              decoration: BoxDecoration(
+                                color: block.color,
+                                border: Border.all(color: Colors.white12, width: 1),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${block.id + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+
+                        // Current moving block
+                        if (currentBlock != null && !gameOver)
+                          Positioned(
+                            bottom: groundHeight + (blocks.length * blockHeight) + (2 * blockHeight) - cameraY,
+                            left: currentBlockX,
+                            child: Container(
+                              width: currentBlock!.width,
+                              height: blockHeight,
+                              decoration: BoxDecoration(
+                                color: currentBlock!.color,
+                                border: Border.all(color: Colors.white38, width: 2),
+                                borderRadius: BorderRadius.circular(2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: currentBlock!.color.withOpacity(0.5),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${currentBlock!.id + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
+
             // UI Overlay
             if (gameOver || isPaused)
               Container(
@@ -237,37 +281,112 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(gameOver ? 'Game Over' : 'Paused', style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)),
+                      Text(
+                        gameOver ? 'Game Over' : 'Paused',
+                        style: const TextStyle(
+                          fontSize: 48,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 20),
-                      Text('Height: ${blocks.length - 1}', style: const TextStyle(fontSize: 24, color: Colors.white)),
-                      Text('Score: $score', style: const TextStyle(fontSize: 24, color: Colors.white)),
+                      Text(
+                        'Height: ${blocks.length - 1}',
+                        style: const TextStyle(fontSize: 24, color: Colors.white),
+                      ),
+                      Text(
+                        'Score: $score',
+                        style: const TextStyle(fontSize: 24, color: Colors.white),
+                      ),
                       const SizedBox(height: 40),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ElevatedButton(onPressed: resetGame, child: const Text('Restart')),
+                          ElevatedButton(
+                            onPressed: resetGame,
+                            child: const Text('Restart'),
+                          ),
                           const SizedBox(width: 20),
-                          ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Exit')),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Exit'),
+                          ),
                         ],
                       )
                     ],
                   ),
                 ),
               ),
+
             // Top HUD
             if (!gameOver)
               Positioned(
-                top: 0, left: 0, right: 0,
+                top: 0,
+                left: 0,
+                right: 0,
                 child: SafeArea(
-                  child: Padding(
+                  child: Container(
                     padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.7),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Text('Height: ${blocks.length - 1}', style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
-                        Text('Score: $score', style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
-                        IconButton(icon: Icon(isPaused ? Icons.play_arrow : Icons.pause, color: Colors.white), onPressed: () => setState(() => isPaused = !isPaused)),
+                        Text(
+                          'Height: ${blocks.length - 1}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Score: $score',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            isPaused ? Icons.play_arrow : Icons.pause,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => setState(() => isPaused = !isPaused),
+                        ),
                       ],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Instructions
+            if (blocks.length == 1 && currentBlock != null)
+              Positioned(
+                bottom: 100,
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Tap to drop the block!\nTry to stack them as precisely as possible.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
                     ),
                   ),
                 ),
