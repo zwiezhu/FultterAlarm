@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
-const double GAME_WIDTH = 400;
-const double GAME_HEIGHT = 600;
+const double DEFAULT_GAME_WIDTH = 400;
+const double DEFAULT_GAME_HEIGHT = 600;
 const double WALL_WIDTH = 40;
 const double PLAYER_SIZE = 26;
 const double GRAVITY = 0.6;
@@ -106,22 +106,33 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
   bool gameOver = false;
   bool isPaused = false;
   double worldTop = 0;
-  
+
+  Size? _screenSize;
+  double get gameWidth => _screenSize?.width ?? DEFAULT_GAME_WIDTH;
+  double get gameHeight => _screenSize?.height ?? DEFAULT_GAME_HEIGHT;
+
   Timer? gameTimer;
   final math.Random random = math.Random();
 
   @override
   void initState() {
     super.initState();
-    _initializeGame();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _screenSize = MediaQuery.of(context).size;
+        });
+        _initializeGame();
+      }
+    });
   }
 
   void _initializeGame() {
     player = Player(
       x: WALL_WIDTH,
-      y: WORLD_FLOOR - GAME_HEIGHT * (1 - PLAYER_SCREEN_RATIO),
+      y: WORLD_FLOOR - gameHeight * (1 - PLAYER_SCREEN_RATIO),
     );
-    camera = Camera(y: WORLD_FLOOR - GAME_HEIGHT);
+    camera = Camera(y: WORLD_FLOOR - gameHeight);
     obstacles.clear();
     diamonds.clear();
     score = 0;
@@ -142,9 +153,9 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
       if (random.nextDouble() < 0.4) {
         obstacles.add(GameObstacle(
           id: random.nextDouble(),
-          x: random.nextBool() 
-            ? WALL_WIDTH + 5 
-            : GAME_WIDTH - WALL_WIDTH - OBSTACLE_SIZE - 5,
+          x: random.nextBool()
+            ? WALL_WIDTH + 5
+            : gameWidth - WALL_WIDTH - OBSTACLE_SIZE - 5,
           y: y + random.nextDouble() * 80 - 40,
         ));
       }
@@ -152,7 +163,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
       if (random.nextDouble() < 0.9) {
         bool isDanger = random.nextDouble() < 0.2;
         double minX = WALL_WIDTH + 20;
-        double maxX = GAME_WIDTH - WALL_WIDTH - DIAMOND_SIZE - 20;
+        double maxX = gameWidth - WALL_WIDTH - DIAMOND_SIZE - 20;
         diamonds.add(GameDiamond(
           id: random.nextDouble(),
           x: minX + random.nextDouble() * (maxX - minX),
@@ -163,7 +174,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
       
       if (y % 240 == 0 && random.nextDouble() < 0.7) {
         bool isDanger = random.nextDouble() < 0.15;
-        double centerX = GAME_WIDTH / 2 - DIAMOND_SIZE / 2;
+        double centerX = gameWidth / 2 - DIAMOND_SIZE / 2;
         diamonds.add(GameDiamond(
           id: random.nextDouble(),
           x: centerX + random.nextDouble() * 60 - 30,
@@ -251,8 +262,8 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
             }
           }
           
-          if (newX >= GAME_WIDTH - WALL_WIDTH - PLAYER_SIZE) {
-            newX = GAME_WIDTH - WALL_WIDTH - PLAYER_SIZE;
+          if (newX >= gameWidth - WALL_WIDTH - PLAYER_SIZE) {
+            newX = gameWidth - WALL_WIDTH - PLAYER_SIZE;
             if (newVx > 0) {
               newVx = 0;
               newVy = newVy * WALL_BOUNCE_DAMPING;
@@ -284,10 +295,10 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
         }
 
         // Update camera
-        double screenPos = camera.y + GAME_HEIGHT * PLAYER_SCREEN_RATIO;
+        double screenPos = camera.y + gameHeight * PLAYER_SCREEN_RATIO;
         if (player.y < screenPos) {
-          double targetY = player.y - GAME_HEIGHT * PLAYER_SCREEN_RATIO;
-          double clampedY = math.min(WORLD_FLOOR - GAME_HEIGHT, targetY);
+          double targetY = player.y - gameHeight * PLAYER_SCREEN_RATIO;
+          double clampedY = math.min(WORLD_FLOOR - gameHeight, targetY);
           double smoothFactor = 0.1;
           camera.y = camera.y + (clampedY - camera.y) * smoothFactor;
         }
@@ -327,12 +338,12 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
 
   List<GameObstacle> _getVisibleObstacles() {
     return obstacles.where((obs) =>
-        obs.y >= camera.y - OBSTACLE_SIZE && obs.y <= camera.y + GAME_HEIGHT + OBSTACLE_SIZE).toList();
+        obs.y >= camera.y - OBSTACLE_SIZE && obs.y <= camera.y + gameHeight + OBSTACLE_SIZE).toList();
   }
 
   List<GameDiamond> _getVisibleDiamonds() {
     return diamonds.where((d) =>
-        d.y >= camera.y - DIAMOND_SIZE && d.y <= camera.y + GAME_HEIGHT + DIAMOND_SIZE).toList();
+        d.y >= camera.y - DIAMOND_SIZE && d.y <= camera.y + gameHeight + DIAMOND_SIZE).toList();
   }
 
   @override
@@ -345,8 +356,8 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
           child: GestureDetector(
             onTap: _handleJump,
             child: Container(
-              width: GAME_WIDTH,
-              height: GAME_HEIGHT,
+              width: gameWidth,
+              height: gameHeight,
               decoration: BoxDecoration(
                 color: const Color(0xFF111827),
                 border: Border.all(color: const Color(0xFF374151), width: 4),
@@ -365,6 +376,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
                           obstacles: _getVisibleObstacles(),
                           diamonds: _getVisibleDiamonds(),
                           worldTop: worldTop,
+                          gameWidth: gameWidth,
                         ),
                       ),
                     ),
@@ -515,6 +527,7 @@ class GamePainter extends CustomPainter {
   final List<GameObstacle> obstacles;
   final List<GameDiamond> diamonds;
   final double worldTop;
+  final double gameWidth;
 
   GamePainter({
     required this.player,
@@ -522,6 +535,7 @@ class GamePainter extends CustomPainter {
     required this.obstacles,
     required this.diamonds,
     required this.worldTop,
+    required this.gameWidth,
   });
 
   @override
@@ -536,7 +550,7 @@ class GamePainter extends CustomPainter {
     );
     canvas.drawRect(
       Rect.fromLTWH(
-        GAME_WIDTH - WALL_WIDTH,
+        gameWidth - WALL_WIDTH,
         worldTop - camera.y,
         WALL_WIDTH,
         WORLD_FLOOR - worldTop,
