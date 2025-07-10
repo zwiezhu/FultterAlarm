@@ -180,7 +180,10 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
     final mediaQuery = MediaQuery.of(context);
     final gameWidth = mediaQuery.size.width;
-    final gameHeight = mediaQuery.size.height - mediaQuery.padding.vertical;
+    // Use the full height minus the top padding. The bottom padding
+    // will be handled by explicit padding to keep the ground visible
+    // on devices with system navigation bars.
+    final gameHeight = mediaQuery.size.height - mediaQuery.padding.top;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f0f),
@@ -189,13 +192,15 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
         child: Stack(
           children: [
             // Game Area
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: gameWidth,
-                height: gameHeight,
-                color: const Color(0xFF1a1a1a),
-                child: Stack(
+            Padding(
+              padding: EdgeInsets.only(bottom: mediaQuery.padding.bottom),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: gameWidth,
+                  height: gameHeight,
+                  color: const Color(0xFF1a1a1a),
+                  child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     // Tower Blocks
