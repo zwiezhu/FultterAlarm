@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_alarm_manager_poc/alarm_actions_screen.dart';
+import 'package:flutter_alarm_manager_poc/game_list_screen.dart';
 import 'package:flutter_alarm_manager_poc/utils/alarm_method_channel.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -64,13 +65,29 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
         ],
       ),
       body: Center(
-        child: ElevatedButton(
-            onPressed: _isRequestingPermission
-                ? null
-                : () async {
-                    await _requestNotificationPermission();
-                  },
-            child: const Text("Schedule Alarm")),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: _isRequestingPermission
+                  ? null
+                  : () async {
+                      await _requestNotificationPermission();
+                    },
+              child: const Text("Schedule Alarm"),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GameListScreen()),
+                );
+              },
+              child: const Text("Casual Play"),
+            ),
+          ],
+        ),
       ),
     );
   }

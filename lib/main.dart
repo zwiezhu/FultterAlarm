@@ -4,6 +4,7 @@ import 'package:flutter_alarm_manager_poc/alarm_manager_screen.dart';
 import 'package:flutter_alarm_manager_poc/alarm_screen.dart';
 import 'package:flutter_alarm_manager_poc/game_screen.dart';
 import 'package:flutter_alarm_manager_poc/hive/service/database_service.dart';
+import 'package:flutter_alarm_manager_poc/sky_tower_game_screen.dart';
 import 'utils/alarm_method_channel.dart';
 
 void main() async {
@@ -33,12 +34,12 @@ class MyApp extends StatelessWidget {
         initialRoute: window.defaultRouteName,
         routes: {
           '/': (context) => const AlarmManagerScreen(),
-          '/alarm': (context) {
+          '/alarm_screen': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
             final alarmTime = args['alarmTime'] as DateTime;
             return AlarmScreen(
               onPlay: () {
-                Navigator.pushNamed(context, '/game');
+                Navigator.pushNamed(context, '/game'); // Navigate to the actual game screen
               },
               onSnooze: () {
                 // This will be handled by the platform channel
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
               alarmTime: alarmTime,
             );
           },
-          '/game': (context) => const GameScreen(),
+          '/game': (context) => const GameScreen(), // Piano Tiles game
+          '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game
         },
       );
   }
