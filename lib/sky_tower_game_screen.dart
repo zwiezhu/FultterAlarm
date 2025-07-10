@@ -64,7 +64,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
   void resetGame() {
     if (_screenSize == null) return; // Ensure _screenSize is initialized
-    final gameWidth = _screenSize!.width - 40;
+    final gameWidth = _screenSize!.width;
     setState(() {
       blocks = [Block(id: 0, width: initialBlockWidth, x: (gameWidth - initialBlockWidth) / 2, color: blockColors[0])];
       score = 0;
@@ -77,7 +77,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
 
   void _createNewBlock() {
     if (gameOver || _screenSize == null) return;
-    final gameWidth = _screenSize!.width - 40;
+    final gameWidth = _screenSize!.width;
     final lastBlock = blocks.last;
     final newWidth = max(40.0, lastBlock.width - (Random().nextDouble() * 10));
     final random = Random();
@@ -101,7 +101,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   void _gameLoop(Timer timer) {
     if (isPaused || gameOver || currentBlock == null || _screenSize == null) return;
 
-    final gameWidth = _screenSize!.width - 40;
+    final gameWidth = _screenSize!.width;
 
     setState(() {
       currentBlockX += direction * currentSpeed;
@@ -119,7 +119,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   void _dropBlock() {
     if (currentBlock == null || gameOver || isPaused || _screenSize == null) return;
 
-    final gameWidth = _screenSize!.width - 40;
+    final gameWidth = _screenSize!.width;
 
     final lastBlock = blocks.last;
     final overlap = max(0.0, min(lastBlock.x + lastBlock.width, currentBlockX + currentBlock!.width) - max(lastBlock.x, currentBlockX));
@@ -167,7 +167,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
     }
 
 
-    final gameWidth = _screenSize!.width - 40;
+    final gameWidth = _screenSize!.width;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0f0f0f),
@@ -180,7 +180,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
               alignment: Alignment.center,
               child: Container(
                 width: gameWidth,
-                height: _screenSize!.height - 100, // Adjusted height to leave space for HUD
+                height: _screenSize!.height,
                 color: const Color(0xFF1a1a1a),
                 child: Stack(
                   clipBehavior: Clip.none,
