@@ -452,8 +452,13 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     if (gameOver || isPaused) return;
 
     if (_screenSize != null) {
+      final isLeft = details.localPosition.dx < _screenSize!.width / 2;
+
       // Store the input, to be applied on the next jump
-      _pendingHorizontalInput = details.localPosition.dx < _screenSize!.width / 2 ? -1 : 1;
+      _pendingHorizontalInput = isLeft ? -1 : 1;
+
+      // Immediately update horizontal velocity for more responsive control
+      ball = ball.copyWith(vx: _pendingHorizontalInput * horizontalSpeed);
     }
   }
 
