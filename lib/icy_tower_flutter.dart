@@ -414,7 +414,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   }
 
   void _updateCamera(double gameHeight) {
-    final targetCameraY = max(gameHeight * 0.4 - ball.y, 0);
+    final double targetCameraY =
+        max(gameHeight * 0.4 - ball.y, 0).toDouble();
     if ((targetCameraY - cameraY).abs() > 1) {
       cameraY = targetCameraY;
     }
