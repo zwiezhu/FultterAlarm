@@ -157,6 +157,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   bool gameOver = false;
   int lastPlatformId = 0;
   int frameCount = 0;
+  int _pendingHorizontalInput = 0; // -1 for left, 1 for right, 0 for none
 
   Timer? _gameLoopTimer;
   Size? _screenSize;
@@ -195,6 +196,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       isPaused = false;
       lastPlatformId = initialPlatforms.length - 1;
       frameCount = 0;
+      _pendingHorizontalInput = 0;
     });
 
     _startGameLoop();
@@ -342,6 +344,15 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     if (collision != null) {
       newY = collision.y - ballSize;
       newVY = jumpForce;
+
+      // Apply pending input on jump
+      if (_pendingHorizontalInput != 0) {
+        newVX = _pendingHorizontalInput * horizontalSpeed;
+        _pendingHorizontalInput = 0; // Reset after use
+      } else {
+        newVX = 0; // Jump straight up if no input
+      }
+
       if (collision.moving) {
         newVX += collision.direction * 0.3;
       }
@@ -440,10 +451,10 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   void _handleTap(TapDownDetails details) {
     if (gameOver || isPaused) return;
 
-    final tapX = details.localPosition.dx;
-    final newVX = tapX < _screenSize!.width / 2 ? -horizontalSpeed : horizontalSpeed;
-
-    ball = ball.copyWith(vx: newVX);
+    if (_screenSize != null) {
+      // Store the input, to be applied on the next jump
+      _pendingHorizontalInput = details.localPosition.dx < _screenSize!.width / 2 ? -1 : 1;
+    }
   }
 
   void _resetGame() {
