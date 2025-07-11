@@ -457,8 +457,11 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       // Store the input, to be applied on the next jump
       _pendingHorizontalInput = isLeft ? -1 : 1;
 
-      // Immediately update horizontal velocity for more responsive control
-      ball = ball.copyWith(vx: _pendingHorizontalInput * horizontalSpeed);
+      // Immediately apply jump with directional velocity
+      ball = ball.copyWith(
+        vx: _pendingHorizontalInput * horizontalSpeed,
+        vy: jumpForce,
+      );
     }
   }
 
@@ -703,7 +706,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
-                    'Tap left or right side to jump!\nAvoid falling down and climb as high as possible.',
+                    'Tap the left side to jump left or the right side to jump right.\nAvoid falling down and climb as high as possible.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
