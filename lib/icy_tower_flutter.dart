@@ -443,7 +443,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     final tapX = details.localPosition.dx;
     final newVX = tapX < _screenSize!.width / 2 ? -horizontalSpeed : horizontalSpeed;
 
-    ball = ball.copyWith(vx: newVX);
+    // Apply a jump in the chosen direction
+    ball = ball.copyWith(vx: newVX, vy: jumpForce);
   }
 
   void _resetGame() {
