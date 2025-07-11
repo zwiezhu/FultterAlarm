@@ -454,8 +454,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     if (_screenSize != null) {
       final isLeft = details.localPosition.dx < _screenSize!.width / 2;
 
-      // Store the input, to be applied on the next jump
-      _pendingHorizontalInput = isLeft ? -1 : 1;
+      // Invert controls: tap right to jump left and tap left to jump right
+      _pendingHorizontalInput = isLeft ? 1 : -1;
 
       // Immediately apply jump with directional velocity
       ball = ball.copyWith(
