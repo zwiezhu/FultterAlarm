@@ -6,6 +6,7 @@ import 'package:flutter_alarm_manager_poc/game_screen.dart';
 import 'package:flutter_alarm_manager_poc/hive/service/database_service.dart';
 import 'package:flutter_alarm_manager_poc/sky_tower_game_screen.dart';
 import 'package:flutter_alarm_manager_poc/wall_bounce_flutter.dart';
+import 'package:flutter_alarm_manager_poc/icy_tower_flutter.dart';
 import 'utils/alarm_method_channel.dart';
 
 void main() async {
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
           '/game': (context) => const GameScreen(), // Piano Tiles game
           '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game
           '/wall_bounce_game': (context) => const WallBounceGame(), // Wall Bounce game
+          '/icy_tower_game': (context) => const IcyTowerGameScreen(), // Icy Tower game
         },
       );
   }

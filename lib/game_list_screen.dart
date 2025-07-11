@@ -29,6 +29,12 @@ class GameListScreen extends StatelessWidget {
               Navigator.pushNamed(context, '/wall_bounce_game');
             },
           ),
+          ListTile(
+            title: const Text('Icy Tower'),
+            onTap: () {
+              Navigator.pushNamed(context, '/icy_tower_game');
+            },
+          ),
         ],
       ),
     );
