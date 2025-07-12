@@ -24,7 +24,6 @@
     </queries>
 
     <application
-        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:label="flutter_alarm_manager_poc">
         <activity
@@ -63,6 +62,15 @@
         <!-- Declare FlutterActivity so it can be launched with a cached engine -->
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:exported="false"
+            android:hardwareAccelerated="true"
+            android:theme="@style/LaunchTheme"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Declare AlarmFlutterActivity for alarm game -->
+        <activity
+            android:name=".activity.AlarmFlutterActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="false"
             android:hardwareAccelerated="true"

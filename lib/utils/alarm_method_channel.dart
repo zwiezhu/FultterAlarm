@@ -15,6 +15,46 @@ class AlarmMethodChannel {
     }
   }
 
+  static Future<void> startAlarmSound() async {
+    try {
+      await platform.invokeMethod('startAlarmSound');
+    } on PlatformException catch (e) {
+      log("Failed to start alarm sound: '${e.message}'.");
+    }
+  }
+
+  static Future<void> stopAlarmSound() async {
+    try {
+      await platform.invokeMethod('stopAlarmSound');
+    } on PlatformException catch (e) {
+      log("Failed to stop alarm sound: '${e.message}'.");
+    }
+  }
+
+  static DateTime? _pendingAlarmTime;
+
+  static void setPendingAlarmTime(DateTime alarmTime) {
+    _pendingAlarmTime = alarmTime;
+  }
+
+  static DateTime? getPendingAlarmTime() {
+    final time = _pendingAlarmTime;
+    _pendingAlarmTime = null; // Clear after getting
+    return time;
+  }
+
+  static Map<String, dynamic>? _pendingAlarmArgs;
+
+  static void setPendingAlarmArgs(Map<String, dynamic> args) {
+    _pendingAlarmArgs = args;
+  }
+
+  static Map<String, dynamic>? getPendingAlarmArgs() {
+    final args = _pendingAlarmArgs;
+    _pendingAlarmArgs = null; // Clear after getting
+    return args;
+  }
+
   static void initialize() {
     platform.setMethodCallHandler(_handleMethodCall);
   }
@@ -40,6 +80,11 @@ class AlarmMethodChannel {
 
         // Handle alarm snoozed
         // You can call a function or update state here
+        break;
+      case 'navigateToAlarmGame':
+        log(name: name, 'Navigating to alarm game');
+        final args = Map<String, dynamic>.from(call.arguments);
+        setPendingAlarmArgs(args);
         break;
       default:
         log('Unrecognized method ${call.method}');

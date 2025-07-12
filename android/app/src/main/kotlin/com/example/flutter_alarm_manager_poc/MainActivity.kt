@@ -3,6 +3,8 @@ package com.example.flutter_alarm_manager_poc
 import android.util.Log
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
+import com.example.flutter_alarm_manager_poc.alarmSoundService.AlarmSoundService
+import com.example.flutter_alarm_manager_poc.alarmSoundService.AlarmSoundServiceImpl
 import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -16,20 +18,27 @@ class MainActivity : FlutterActivity() {
     private val TAG = "POC"
 
     private lateinit var alarmScheduler: AlarmScheduler
+    private lateinit var alarmSoundService: AlarmSoundService
 
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        Log.d(TAG, "configureFlutterEngine called - engine ID: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
+
         FlutterEngineCache.getInstance().put(ENGINE_ID,flutterEngine)
 
         alarmScheduler = AlarmSchedulerImpl(this)
+        alarmSoundService = AlarmSoundServiceImpl(this)
 
-
-        MethodChannel(
+        val methodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             CHANNEL
-        ).setMethodCallHandler { call, result ->
+        )
+        
+        Log.d(TAG, "Setting up MethodChannel for engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
+        
+        methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "scheduleAlarm" -> {
                     Log.d(TAG, "Method Channel Invoked, Alarm Scheduling")
@@ -44,6 +53,16 @@ class MainActivity : FlutterActivity() {
                 "alarmSnoozed" -> {
                     Log.d(TAG, "Alarm Snoozed")
                     // Handle alarm snoozed
+                    result.success(null)
+                }
+                "startAlarmSound" -> {
+                    Log.d(TAG, "Starting alarm sound - called from engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
+                    alarmSoundService.startAlarmSound()
+                    result.success(null)
+                }
+                "stopAlarmSound" -> {
+                    Log.d(TAG, "Stopping alarm sound - called from engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
+                    alarmSoundService.stopAlarmSound()
                     result.success(null)
                 }
                 else -> result.notImplemented()

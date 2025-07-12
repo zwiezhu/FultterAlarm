@@ -10,6 +10,8 @@ import com.example.flutter_alarm_manager_poc.alarmNotificationService.AlarmNotif
 import com.example.flutter_alarm_manager_poc.alarmNotificationService.AlarmNotificationServiceImpl
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
+import com.example.flutter_alarm_manager_poc.alarmSoundService.AlarmSoundService
+import com.example.flutter_alarm_manager_poc.alarmSoundService.AlarmSoundServiceImpl
 import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import com.example.flutter_alarm_manager_poc.screens.AlarmScreen
 
@@ -28,6 +30,7 @@ class AlarmActivity : ComponentActivity() {
     private var isNewEngineCreated = false // create new engine when app is closed and use existing when app is resumed state
     private lateinit var alarmNotificationService: AlarmNotificationService
     private lateinit var alarmScheduler: AlarmScheduler
+    private lateinit var alarmSoundService: AlarmSoundService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +42,7 @@ class AlarmActivity : ComponentActivity() {
 
         alarmNotificationService = AlarmNotificationServiceImpl(this)
         alarmScheduler = AlarmSchedulerImpl(this)
+        alarmSoundService = AlarmSoundServiceImpl(this)
 
 
         // Check if a cached engine is available
@@ -61,6 +65,23 @@ class AlarmActivity : ComponentActivity() {
 
         // Set up the MethodChannel
         val channel = MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, CHANNEL)
+        
+        // Set up method call handler for alarm sound control
+        channel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startAlarmSound" -> {
+                    Log.d(TAG, "Starting alarm sound from AlarmActivity")
+                    alarmSoundService.startAlarmSound()
+                    result.success(null)
+                }
+                "stopAlarmSound" -> {
+                    Log.d(TAG, "Stopping alarm sound from AlarmActivity")
+                    alarmSoundService.stopAlarmSound()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
 
         // Set the content of the AlarmActivity using Jetpack Compose
         setContent {
@@ -72,15 +93,48 @@ class AlarmActivity : ComponentActivity() {
                             channel.invokeMethod("alarmAccepted", null)
                             alarmNotificationService.cancelNotification(alarmId)
                             
-                            // Launch Flutter game screen using the cached engine
-                            // Since initialRoute can't be set on a cached engine,
-                            // push the desired route before launching the activity
-                            flutterEngine?.navigationChannel?.pushRoute("/game")
-                            val gameIntent =
-                                FlutterActivity.withCachedEngine(ENGINE_ID)
-                                    .build(this@AlarmActivity)
-                            startActivity(FlutterActivity.withNewEngine().initialRoute("/game").build(this))
-                            finish()
+                            // Pass alarm time and gameType through method channel and navigate
+                            val alarmArgs = mapOf(
+                                "alarmTime" to alarmTime,
+                                "gameType" to "piano_tiles" // docelowo dynamicznie
+                            )
+                            channel.invokeMethod("navigateToAlarmGame", alarmArgs)
+                            
+                            // Create new Flutter engine with MethodChannel
+                            val newEngine = FlutterEngine(this)
+                            newEngine.navigationChannel.setInitialRoute("/alarm_game")
+                            newEngine.dartExecutor.executeDartEntrypoint(
+                                DartExecutor.DartEntrypoint.createDefault()
+                            )
+                            
+                            // Register MethodChannel for alarm sound
+                            MethodChannel(newEngine.dartExecutor.binaryMessenger, CHANNEL)
+                                .setMethodCallHandler { call, result ->
+                                    when (call.method) {
+                                        "startAlarmSound" -> {
+                                            Log.d(TAG, "Starting alarm sound from new engine")
+                                            alarmSoundService.startAlarmSound()
+                                            result.success(null)
+                                        }
+                                        "stopAlarmSound" -> {
+                                            Log.d(TAG, "Stopping alarm sound from new engine")
+                                            alarmSoundService.stopAlarmSound()
+                                            result.success(null)
+                                        }
+                                        else -> result.notImplemented()
+                                    }
+                                }
+                            
+                            // Cache the engine FIRST
+                            FlutterEngineCache.getInstance().put("alarm_game_engine", newEngine)
+                            
+                            // Then create the intent with cached engine
+                            val intent = io.flutter.embedding.android.FlutterActivity
+                                .withCachedEngine("alarm_game_engine")
+                                .build(this)
+                            
+                            startActivity(intent)
+                            // finish() // <- zakomentowane na czas testu
                         },
                         onSnooze = {
                             Log.d(TAG, "Snooze button clicked")

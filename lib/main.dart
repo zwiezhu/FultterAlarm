@@ -15,6 +15,7 @@ import 'package:flutter_alarm_manager_poc/memory_match_flutter.dart';
 import 'package:flutter_alarm_manager_poc/number_rush_flutter.dart';
 import 'package:flutter_alarm_manager_poc/sudoku_game_flutter.dart';
 import 'package:flutter_alarm_manager_poc/block_drop_game_flutter.dart';
+import 'package:flutter_alarm_manager_poc/alarm_game_screen.dart';
 import 'utils/alarm_method_channel.dart';
 
 void main() async {
@@ -49,13 +50,42 @@ class MyApp extends StatelessWidget {
             final alarmTime = args['alarmTime'] as DateTime;
             return AlarmScreen(
               onPlay: () {
-                Navigator.pushNamed(context, '/game'); // Navigate to the actual game screen
+                Navigator.pushNamed(context, '/alarm_game', arguments: {'alarmTime': alarmTime});
               },
               onSnooze: () {
                 // This will be handled by the platform channel
               },
               alarmTime: alarmTime,
             );
+          },
+          '/alarm_game': (context) {
+            // Try to get arguments from route, fallback to method channel
+            Map<String, dynamic>? args;
+            try {
+              args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+            } catch (e) {
+              // Arguments not available, try method channel
+            }
+            
+            args ??= AlarmMethodChannel.getPendingAlarmArgs();
+            
+            DateTime alarmTime;
+            String gameType;
+            if (args != null) {
+              if (args['alarmTime'] is DateTime) {
+                alarmTime = args['alarmTime'] as DateTime;
+              } else if (args['alarmTime'] is int) {
+                alarmTime = DateTime.fromMillisecondsSinceEpoch(args['alarmTime'] as int);
+              } else {
+                alarmTime = DateTime.now();
+              }
+              gameType = args['gameType'] as String? ?? 'piano_tiles';
+            } else {
+              alarmTime = DateTime.now();
+              gameType = 'piano_tiles';
+            }
+            
+            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType);
           },
           '/game': (context) => const GameScreen(), // Piano Tiles game
           '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game

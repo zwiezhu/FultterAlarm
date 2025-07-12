@@ -37,7 +37,7 @@ class AlarmScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: onPlay,
-              child: const Text('Play'),
+              child: const Text('Graj w grę'),
             ),
           ],
         ),
