@@ -42,12 +42,15 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
   static const double obstacleHeight = 26;
   static const double ballSpeed = 7;
   static const double obstacleSpeedStart = 2.8;
-  static const double obstacleSpeedMax = 7;
+  late double obstacleSpeedMax;
   static const int obstacleIntervalStart = 2400;
   static const int obstacleIntervalMin = 550;
   static const double gapMin = ballSize * 1.4;
   static const double gapMax = ballSize * 2.3;
   static const double safetyMargin = 0.9;
+
+  // Calculated at runtime based on screen size.
+  late double crossTimeMs; // Time for the ball to cross the screen.
 
   // Game state
   double ballX = 0;
@@ -83,12 +86,20 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
     final mediaQuery = MediaQuery.of(context);
     gameWidth = mediaQuery.size.width;
     gameHeight = mediaQuery.size.height;
-    
+
     setState(() {
       ballX = (gameWidth - ballSize) / 2;
       ballY = gameHeight - ballSize - 12;
     });
-    
+
+    // Calculate how long it takes for the ball to move across the screen.
+    final crossFrames = (gameWidth - ballSize) / ballSpeed;
+    crossTimeMs = crossFrames * 16;
+
+    // Determine the maximum safe obstacle speed based on this time.
+    final verticalDistance = ballY + obstacleHeight;
+    obstacleSpeedMax = verticalDistance / crossFrames;
+
     _resetGame();
   }
 
@@ -99,7 +110,7 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
       tunnels = [];
       isPaused = false;
       gameOver = false;
-      obstacleSpeed = obstacleSpeedStart;
+      obstacleSpeed = min(obstacleSpeedStart, obstacleSpeedMax);
       obstacleInterval = obstacleIntervalStart;
       gapMultiplier = 2.0;
       gameKey++;
