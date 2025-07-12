@@ -24,12 +24,18 @@ class MemoryMatchGameScreen extends StatefulWidget {
   final Function(int)? onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
 
   const MemoryMatchGameScreen({
     super.key,
     this.onScoreChange,
     this.gameCompleted = false,
     this.casualMode = false,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
   });
 
   @override
@@ -121,6 +127,9 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
 
     final card = cards.firstWhere((c) => c.id == cardId);
     if (card.isFlipped || card.isMatched) return;
+
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
 
     setState(() {
       flippedCards.add(cardId);

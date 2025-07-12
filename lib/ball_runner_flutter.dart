@@ -24,12 +24,18 @@ class BallRunnerGame extends StatefulWidget {
   final Function(int) onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
 
   const BallRunnerGame({
     Key? key,
     required this.onScoreChange,
     this.gameCompleted = false,
     this.casualMode = false,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
   }) : super(key: key);
 
   @override
@@ -293,6 +299,9 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
   void _onPanStart(DragStartDetails details) {
     final touchX = details.globalPosition.dx;
     moveDirection = touchX < gameWidth / 2 ? -1 : 1;
+    
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
   }
 
   void _onPanEnd(DragEndDetails details) {

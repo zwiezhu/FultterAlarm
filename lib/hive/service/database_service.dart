@@ -2,11 +2,14 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/alarm_action.dart';
+import '../models/alarm_settings.dart';
 
 class DatabaseService {
   static const String alarmBoxName = 'alarm_actions';
+  static const String alarmSettingsBoxName = 'alarm_settings';
   static DatabaseService? _instance;
   late Box<AlarmAction> _alarmBox;
+  late Box<AlarmSettings> _alarmSettingsBox;
 
   // Private constructor
   DatabaseService._();
@@ -20,15 +23,20 @@ class DatabaseService {
   ValueListenable<Box<AlarmAction>> get alarmBoxListenable =>
       _alarmBox.listenable();
 
+  ValueListenable<Box<AlarmSettings>> get alarmSettingsBoxListenable =>
+      _alarmSettingsBox.listenable();
+
   // Initialize Hive and open the alarm actions box
   Future<void> initializeHive() async {
     try {
       await Hive.initFlutter();
       Hive.registerAdapter(AlarmActionAdapter());
+      Hive.registerAdapter(AlarmSettingsAdapter());
       _alarmBox = await Hive.openBox<AlarmAction>(alarmBoxName);
-      log('Hive initialized and box opened successfully.');
+      _alarmSettingsBox = await Hive.openBox<AlarmSettings>(alarmSettingsBoxName);
+      log('Hive initialized and boxes opened successfully.');
     } catch (e) {
-      log('Failed to initialize Hive or open box: $e');
+      log('Failed to initialize Hive or open boxes: $e');
     }
   }
 
@@ -66,6 +74,49 @@ class DatabaseService {
       log('All alarm actions cleared.');
     } catch (e) {
       log('Failed to clear alarm actions: $e');
+    }
+  }
+
+  // Alarm Settings methods
+  Future<void> saveAlarmSettings(AlarmSettings alarmSettings) async {
+    try {
+      await _alarmSettingsBox.put(alarmSettings.id, alarmSettings);
+      log('Saved alarm settings: ${alarmSettings.name}');
+    } catch (e) {
+      log('Failed to save alarm settings: $e');
+    }
+  }
+
+  List<AlarmSettings> getAllAlarmSettings() {
+    try {
+      var settings = _alarmSettingsBox.values.toList();
+      log('Retrieved ${settings.length} alarm settings.');
+      return settings;
+    } catch (e) {
+      log('Failed to retrieve alarm settings: $e');
+      return [];
+    }
+  }
+
+  Future<void> deleteAlarmSettings(String id) async {
+    try {
+      await _alarmSettingsBox.delete(id);
+      log('Deleted alarm settings: $id');
+    } catch (e) {
+      log('Failed to delete alarm settings: $e');
+    }
+  }
+
+  Future<void> toggleAlarmSettings(String id, bool enabled) async {
+    try {
+      final alarm = _alarmSettingsBox.get(id);
+      if (alarm != null) {
+        final updatedAlarm = alarm.copyWith(isEnabled: enabled);
+        await _alarmSettingsBox.put(id, updatedAlarm);
+        log('Toggled alarm settings: $id to $enabled');
+      }
+    } catch (e) {
+      log('Failed to toggle alarm settings: $e');
     }
   }
 }

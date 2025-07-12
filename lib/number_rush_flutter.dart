@@ -26,12 +26,18 @@ class NumberRushGameScreen extends StatefulWidget {
   final Function(int)? onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
 
   const NumberRushGameScreen({
     super.key,
     this.onScoreChange,
     this.gameCompleted = false,
     this.casualMode = false,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
   });
 
   @override
@@ -166,6 +172,9 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
 
   void _handleAnswer(int selectedAnswer) {
     if (currentProblem == null || gameOver || (widget.gameCompleted && !widget.casualMode)) return;
+
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
 
     final isCorrect = selectedAnswer == currentProblem!.answer;
     

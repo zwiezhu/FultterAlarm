@@ -46,12 +46,18 @@ class SudokuGame extends StatefulWidget {
   final Function(int) onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
 
   const SudokuGame({
     super.key,
     required this.onScoreChange,
     required this.gameCompleted,
     this.casualMode = false,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
   });
 
   @override
@@ -224,6 +230,10 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
 
   void _handleCellPress(int row, int col) {
     if (isPaused || gameOver || original[row][col]) return;
+    
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
+    
     setState(() {
       selected = Coord(row, col);
     });
@@ -232,6 +242,9 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
   void _handleNumberPress(int num) {
     if (selected == null || isPaused || gameOver) return;
     if (original[selected!.row][selected!.col]) return;
+
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
 
     if (solution[selected!.row][selected!.col] == num) {
       setState(() {

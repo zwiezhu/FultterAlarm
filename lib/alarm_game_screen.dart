@@ -3,6 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'utils/alarm_method_channel.dart';
 import 'swipe_tiles_flutter.dart';
+import 'memory_match_flutter.dart';
+import 'number_rush_flutter.dart';
+import 'sudoku_game_flutter.dart';
+import 'ball_runner_flutter.dart';
 
 class AlarmGameScreen extends StatefulWidget {
   final DateTime alarmTime;
@@ -196,6 +200,33 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
       case 'piano_tiles':
       case 'swipe_tiles':
         return SwipeTilesGameScreen(
+          onUserInteraction: _handleUserInteraction,
+          remainingTime: remainingSeconds,
+          inactivityTime: inactivityTimer,
+        );
+      case 'memory_match':
+        return MemoryMatchGameScreen(
+          onUserInteraction: _handleUserInteraction,
+          remainingTime: remainingSeconds,
+          inactivityTime: inactivityTimer,
+        );
+      case 'number_rush':
+        return NumberRushGameScreen(
+          onUserInteraction: _handleUserInteraction,
+          remainingTime: remainingSeconds,
+          inactivityTime: inactivityTimer,
+        );
+      case 'sudoku':
+        return SudokuGame(
+          onScoreChange: (score) => _handleUserInteraction(),
+          gameCompleted: false,
+          onUserInteraction: _handleUserInteraction,
+          remainingTime: remainingSeconds,
+          inactivityTime: inactivityTimer,
+        );
+      case 'ball_runner':
+        return BallRunnerGame(
+          onScoreChange: (score) => _handleUserInteraction(),
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
