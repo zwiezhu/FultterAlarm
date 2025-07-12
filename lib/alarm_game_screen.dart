@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'utils/alarm_method_channel.dart';
+import 'utils/volume_controller.dart';
 
 // Model for a single tile
 class Tile {
@@ -54,12 +55,17 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   int inactivityTimer = 15; // 15 seconds inactivity timer
   bool showCompletionDialog = false;
 
+  // Debug state
+  String debugInfo = "Initializing...";
+  bool showDebugInfo = true;
+
   // Timers
   Timer? _gameLoopTimer;
   Timer? _tileSpawner;
   Timer? _alarmTimer;
   Timer? _inactivityTimer;
   Timer? _countdownTimer;
+  Timer? _debugTimer;
 
   // Screen size
   Size? _screenSize;
@@ -67,6 +73,7 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   @override
   void initState() {
     super.initState();
+    print('AlarmGameScreen: initState called');
     // Defer game start until we have screen dimensions
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -75,26 +82,67 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
         });
         resetGame();
         _startAlarmSystem();
+        _startDebugTimer();
+      }
+    });
+  }
+
+  void _startDebugTimer() {
+    _debugTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (mounted) {
+        setState(() {
+          debugInfo = '''
+Alarm Active: $alarmActive
+Remaining Time: ${remainingSeconds}s
+Inactivity Timer: ${inactivityTimer}s
+Game Over: $gameOver
+Is Paused: $isPaused
+Score: $score
+Tiles Count: ${tiles.length}
+          ''';
+        });
       }
     });
   }
 
   void _startAlarm() async {
+    print('AlarmGameScreen: _startAlarm called');
+    setState(() {
+      debugInfo = "Starting alarm sound...";
+    });
+    
     // Start alarm sound through platform channel
     await AlarmMethodChannel.startAlarmSound();
     print('Alarm started at ${widget.alarmTime}');
+    
+    setState(() {
+      debugInfo = "Alarm sound started";
+    });
   }
 
   void _stopAlarm() async {
+    print('AlarmGameScreen: _stopAlarm called');
+    setState(() {
+      debugInfo = "Stopping alarm sound...";
+    });
+    
     // Stop alarm sound through platform channel
     await AlarmMethodChannel.stopAlarmSound();
     print('Alarm stopped');
+    
+    setState(() {
+      debugInfo = "Alarm sound stopped";
+    });
   }
 
-  void _startAlarmSystem() {
+  void _startAlarmSystem() async {
+    print('AlarmGameScreen: _startAlarmSystem called');
+    setState(() {
+      debugInfo = "Starting alarm system...";
+    });
+    
     // Don't start alarm sound initially - it should be stopped when game opens
     // _startAlarm(); // <- zakomentowane - alarm nie dzwoni od razu
-    
     // Start the 1-minute countdown
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
@@ -110,24 +158,36 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
 
     // Start inactivity timer
     _startInactivityTimer();
+    
+    setState(() {
+      debugInfo = "Alarm system started - waiting for inactivity";
+    });
   }
 
   void _startInactivityTimer() {
+    print('AlarmGameScreen: _startInactivityTimer called - timer: $inactivityTimer');
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (inactivityTimer > 0) {
         setState(() {
           inactivityTimer--;
         });
+        print('AlarmGameScreen: Inactivity timer: $inactivityTimer');
       } else {
         // User was inactive for 15 seconds
+        print('AlarmGameScreen: User inactive for 15 seconds - starting alarm');
         _handleInactivity();
         timer.cancel();
       }
     });
   }
 
-  void _handleInactivity() {
+  void _handleInactivity() async {
+    print('AlarmGameScreen: _handleInactivity called');
+    setState(() {
+      debugInfo = "User inactive - restarting alarm...";
+    });
+    
     // Reset the countdown and restart alarm
     setState(() {
       remainingSeconds = 60;
@@ -139,10 +199,12 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
     _startInactivityTimer();
   }
 
-  void _completeAlarm() {
+  void _completeAlarm() async {
+    print('AlarmGameScreen: _completeAlarm called');
     setState(() {
       alarmActive = false;
       showCompletionDialog = true;
+      debugInfo = "Alarm completed!";
     });
     
     _stopAlarm();
@@ -196,15 +258,21 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   }
 
   void _handleUserInteraction() {
+    print('AlarmGameScreen: _handleUserInteraction called');
     // Always reset inactivity timer on any user interaction
     setState(() {
       inactivityTimer = 15; // Reset inactivity timer
+      debugInfo = "User interaction detected - resetting timer";
     });
     _startInactivityTimer(); // Restart the timer
     
     // Stop alarm sound when user interacts (if alarm is currently playing)
     if (alarmActive) {
+      print('AlarmGameScreen: Stopping alarm due to user interaction');
       _stopAlarm();
+      setState(() {
+        alarmActive = false;
+      });
     }
   }
 
@@ -256,253 +324,289 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
     }
   }
 
-  void _handleTileTap(Tile tile) {
-    if (!tile.active || gameOver || isPaused) return;
-
-    // Register user interaction
-    _handleUserInteraction();
-
-    setState(() {
-      tiles.removeWhere((t) => t.id == tile.id);
-      score++;
-      speed = min(initialSpeed + score * 0.05, maxSpeed);
-      _rescheduleSpawner();
-    });
-  }
-
   void _handleGameOver() {
     setState(() {
       gameOver = true;
-      isPaused = true;
-      _gameLoopTimer?.cancel();
-      _tileSpawner?.cancel();
+      debugInfo = "Game Over!";
+    });
+    
+    _stopGame();
+    
+    // Show game over dialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showGameOverDialog();
     });
   }
 
-  void _rescheduleSpawner() {
+  void _showGameOverDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Przegrałeś!',
+            style: TextStyle(color: Colors.red, fontSize: 24),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'Udało Ci się uzyskać $score punktów.\n\nSpróbuj ponownie!',
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  resetGame();
+                },
+                child: const Text(
+                  'Spróbuj ponownie',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _stopGame() {
+    _gameLoopTimer?.cancel();
     _tileSpawner?.cancel();
-    final newIntervalMs = (initialSpawnIntervalMs * (initialSpeed / speed)).round();
-    _tileSpawner = Timer.periodic(Duration(milliseconds: newIntervalMs), (_) {
-      _spawnTile();
-    });
   }
 
   void resetGame() {
-    final random = Random();
-    final initialTiles = <Tile>[];
-    final usedColumns = <int>{};
-    tileId = 0;
-
-    for (int i = 0; i < 3; i++) {
-      int col;
-      do {
-        col = random.nextInt(cols);
-      } while (usedColumns.contains(col));
-      usedColumns.add(col);
-      initialTiles.add(Tile(
-        id: tileId++,
-        col: col,
-        y: -tileHeight * (i * 1.5 + 1),
-      ));
-    }
-
     setState(() {
-      tiles = initialTiles;
+      tiles.clear();
       score = 0;
-      isPaused = false;
       gameOver = false;
+      isPaused = false;
       speed = initialSpeed;
+      tileId = 0;
+      debugInfo = "Game reset";
     });
 
-    _gameLoopTimer?.cancel();
+    _stopGame();
+
+    // Start game loop
     _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), _gameLoop);
-    _rescheduleSpawner();
+    
+    // Start tile spawning
+    _tileSpawner = Timer.periodic(Duration(milliseconds: initialSpawnIntervalMs), (timer) {
+      _spawnTile();
+      
+      // Increase speed gradually
+      if (speed < maxSpeed) {
+        speed += 0.1;
+      }
+    });
   }
 
-  void togglePause() {
-    if (!gameOver) {
-      setState(() {
-        isPaused = !isPaused;
-      });
-    }
+  void _onTileTap(Tile tile) {
+    if (gameOver || isPaused) return;
+
+    setState(() {
+      tile.active = false;
+      score += 10;
+      debugInfo = "Tile tapped! Score: $score";
+    });
+
+    _handleUserInteraction();
   }
 
   @override
   void dispose() {
-    _gameLoopTimer?.cancel();
-    _tileSpawner?.cancel();
-    _alarmTimer?.cancel();
+    print('AlarmGameScreen: dispose called');
+    _stopAlarm();
+    _stopGame();
     _inactivityTimer?.cancel();
     _countdownTimer?.cancel();
-    _stopAlarm();
+    _debugTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_screenSize == null) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final tileWidth = _screenSize!.width / cols;
-
     return Scaffold(
-      backgroundColor: const Color(0xFF202020),
-      body: GestureDetector(
-        onTap: () {
-          // Register any tap on the screen as user interaction
-          _handleUserInteraction();
-        },
-        child: Stack(
+      backgroundColor: Colors.black,
+      body: Stack(
         children: [
-          // Game tiles
-          ...tiles.where((tile) => tile.active).map((tile) {
-            return Positioned(
-              left: tile.col * tileWidth,
-              top: tile.y,
-              width: tileWidth,
-              height: tileHeight,
-              child: GestureDetector(
-                onTap: () => _handleTileTap(tile),
-                child: Container(
-                  margin: const EdgeInsets.all(3.0),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            );
-          }),
-          
-          // UI elements
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      children: [
-                        const Text(
-                          'Score',
-                          style: TextStyle(color: Colors.white70, fontSize: 18),
-                        ),
-                        Text(
-                          '$score',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.greenAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        if (alarmActive) ...[
-                          const Text(
-                            'Pozostało',
-                            style: TextStyle(color: Colors.white70, fontSize: 16),
-                          ),
-                          Text(
-                            '${remainingSeconds}s',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Interakcja',
-                            style: TextStyle(color: Colors.white70, fontSize: 16),
-                          ),
-                          Text(
-                            '${inactivityTimer}s',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: inactivityTimer <= 5 ? Colors.red : Colors.yellow,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _handleUserInteraction();
-                        togglePause();
-                      },
-                      icon: Icon(
-                        isPaused && !gameOver ? Icons.play_arrow : Icons.pause,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-                  ],
+          // Game area
+          GestureDetector(
+            onTapDown: (details) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final tileWidth = screenWidth / cols;
+              final col = (details.localPosition.dx / tileWidth).floor();
+              
+              // Find the tile in this column that's closest to being tapped
+              Tile? targetTile;
+              double minDistance = double.infinity;
+              
+              for (var tile in tiles) {
+                if (tile.active && tile.col == col) {
+                  final distance = (tile.y + tileHeight / 2 - details.localPosition.dy).abs();
+                  if (distance < minDistance) {
+                    minDistance = distance;
+                    targetTile = tile;
+                  }
+                }
+              }
+              
+              if (targetTile != null && minDistance < tileHeight) {
+                _onTileTap(targetTile);
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              child: CustomPaint(
+                painter: GamePainter(
+                  tiles: tiles,
+                  cols: cols,
+                  tileHeight: tileHeight,
                 ),
               ),
             ),
           ),
           
-          // Pause/Game Over Overlay
-          if (isPaused || gameOver)
-            GestureDetector(
-              onTap: () {
-                _handleUserInteraction();
-                if (gameOver) {
-                  resetGame();
-                }
-              },
+          // Debug info overlay
+          if (showDebugInfo)
+            Positioned(
+              top: 50,
+              left: 10,
+              right: 10,
               child: Container(
-                color: Colors.black.withOpacity(0.85),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        gameOver ? 'Game Over' : 'Paused',
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      if (gameOver)
-                        Text(
-                          'Score: $score',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            color: Colors.white,
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      if (gameOver)
-                        const Text(
-                          'Tap to play again',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white70,
-                          ),
-                        ),
-                    ],
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  debugInfo,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
                   ),
                 ),
               ),
             ),
+          
+          // Game UI
+          Positioned(
+            top: showDebugInfo ? 150 : 50,
+            left: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pozostało: ${remainingSeconds}s',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Nieaktywność: ${inactivityTimer}s',
+                  style: TextStyle(
+                    color: inactivityTimer <= 5 ? Colors.red : Colors.white,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Wynik: $score',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Toggle debug info button
+          Positioned(
+            top: 50,
+            right: 10,
+            child: FloatingActionButton.small(
+              onPressed: () {
+                setState(() {
+                  showDebugInfo = !showDebugInfo;
+                });
+              },
+              backgroundColor: Colors.blue,
+              child: Icon(
+                showDebugInfo ? Icons.visibility_off : Icons.visibility,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          
+          // Test alarm button
+          Positioned(
+            top: 120,
+            right: 10,
+            child: FloatingActionButton.small(
+              onPressed: () {
+                print('Test button pressed - starting alarm manually');
+                _startAlarm();
+              },
+              backgroundColor: Colors.red,
+              child: Icon(
+                Icons.alarm,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ],
-        ),
       ),
     );
   }
+}
+
+class GamePainter extends CustomPainter {
+  final List<Tile> tiles;
+  final int cols;
+  final double tileHeight;
+
+  GamePainter({
+    required this.tiles,
+    required this.cols,
+    required this.tileHeight,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    final tileWidth = size.width / cols;
+
+    for (var tile in tiles) {
+      if (tile.active) {
+        final rect = Rect.fromLTWH(
+          tile.col * tileWidth + 10,
+          tile.y,
+          tileWidth - 20,
+          tileHeight - 10,
+        );
+        canvas.drawRect(rect, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 } 

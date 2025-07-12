@@ -9,7 +9,9 @@ class AlarmMethodChannel {
 
   static Future<void> scheduleAlarm() async {
     try {
+      log(name: name, 'Scheduling alarm...');
       await platform.invokeMethod('scheduleAlarm');
+      log(name: name, 'Alarm scheduled successfully');
     } on PlatformException catch (e) {
       log("Failed to schedule alarm: '${e.message}'.");
     }
@@ -17,7 +19,9 @@ class AlarmMethodChannel {
 
   static Future<void> startAlarmSound() async {
     try {
+      log(name: name, 'Starting alarm sound...');
       await platform.invokeMethod('startAlarmSound');
+      log(name: name, 'Alarm sound start request sent successfully');
     } on PlatformException catch (e) {
       log("Failed to start alarm sound: '${e.message}'.");
     }
@@ -25,7 +29,9 @@ class AlarmMethodChannel {
 
   static Future<void> stopAlarmSound() async {
     try {
+      log(name: name, 'Stopping alarm sound...');
       await platform.invokeMethod('stopAlarmSound');
+      log(name: name, 'Alarm sound stop request sent successfully');
     } on PlatformException catch (e) {
       log("Failed to stop alarm sound: '${e.message}'.");
     }
@@ -56,10 +62,14 @@ class AlarmMethodChannel {
   }
 
   static void initialize() {
+    log(name: name, 'Initializing AlarmMethodChannel');
     platform.setMethodCallHandler(_handleMethodCall);
+    log(name: name, 'AlarmMethodChannel initialized');
   }
 
   static Future<dynamic> _handleMethodCall(MethodCall call) async {
+    log(name: name, 'Received method call: ${call.method}');
+
     // var alarmBox = Hive.box<AlarmAction>('alarm_actions');
 
     switch (call.method) {
@@ -85,6 +95,12 @@ class AlarmMethodChannel {
         log(name: name, 'Navigating to alarm game');
         final args = Map<String, dynamic>.from(call.arguments);
         setPendingAlarmArgs(args);
+        break;
+      case 'setMaxVolume':
+        log(name: name, 'Setting max volume - handled by native code');
+        break;
+      case 'restoreOriginalVolume':
+        log(name: name, 'Restoring original volume - handled by native code');
         break;
       default:
         log('Unrecognized method ${call.method}');

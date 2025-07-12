@@ -19,12 +19,16 @@ import com.example.flutter_alarm_manager_poc.model.AlarmItem
 import android.app.ActivityManager
 
 class AlarmReceiver : BroadcastReceiver() {
-
+    private val TAG = "AlarmReceiver"
 
     override fun onReceive(context: Context, intent: Intent?) {
+        Log.d(TAG, "AlarmReceiver.onReceive called")
+        
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val message = intent?.getStringExtra("ALARM_MESSAGE") ?: "Alarm!"
         val alarmTime = System.currentTimeMillis()
+        
+        Log.d(TAG, "Alarm triggered - ID: $alarmId, Message: $message, Time: $alarmTime")
         
         // Always show the AlarmActivity regardless of app state
         val alarmIntent = Intent(context, AlarmActivity::class.java).apply {
@@ -33,10 +37,15 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("ALARM_MESSAGE", message)
             putExtra("ALARM_TIME", alarmTime)
         }
+        
+        Log.d(TAG, "Starting AlarmActivity...")
         context.startActivity(alarmIntent)
+        Log.d(TAG, "AlarmActivity started")
         
         // Also show notification for persistent alarm handling
+        Log.d(TAG, "Showing notification...")
         val notificationService: AlarmNotificationService = AlarmNotificationServiceImpl(context)
         notificationService.showNotification(AlarmItem(alarmId, message), alarmTime)
+        Log.d(TAG, "Notification shown")
     }
 }

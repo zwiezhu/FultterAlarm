@@ -36,6 +36,9 @@ class MainActivity : FlutterActivity() {
             CHANNEL
         )
         
+        // Set method channel for alarm sound service
+        (alarmSoundService as AlarmSoundServiceImpl).setMethodChannel(methodChannel)
+        
         Log.d(TAG, "Setting up MethodChannel for engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
         
         methodChannel.setMethodCallHandler { call, result ->
@@ -57,12 +60,33 @@ class MainActivity : FlutterActivity() {
                 }
                 "startAlarmSound" -> {
                     Log.d(TAG, "Starting alarm sound - called from engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
-                    alarmSoundService.startAlarmSound()
-                    result.success(null)
+                    try {
+                        alarmSoundService.startAlarmSound()
+                        Log.d(TAG, "Alarm sound start request completed successfully")
+                        result.success(null)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error in startAlarmSound: ${e.message}", e)
+                        result.error("ALARM_ERROR", "Failed to start alarm sound", e.message)
+                    }
                 }
                 "stopAlarmSound" -> {
                     Log.d(TAG, "Stopping alarm sound - called from engine: ${flutterEngine.dartExecutor.binaryMessenger.hashCode()}")
                     alarmSoundService.stopAlarmSound()
+                    result.success(null)
+                }
+                "setMaxVolume" -> {
+                    Log.d(TAG, "Setting max volume")
+                    alarmSoundService.forceMaxVolume()
+                    result.success(null)
+                }
+                "restoreOriginalVolume" -> {
+                    Log.d(TAG, "Restoring original volume")
+                    // Volume will be restored when alarm stops
+                    result.success(null)
+                }
+                "forceMaxVolume" -> {
+                    Log.d(TAG, "Forcing max volume")
+                    alarmSoundService.forceMaxVolume()
                     result.success(null)
                 }
                 else -> result.notImplemented()
