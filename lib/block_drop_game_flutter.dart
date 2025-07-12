@@ -66,6 +66,7 @@ class _BlockDropGameState extends State<BlockDropGame> {
 
   Timer? _gameLoopTimer;
   final Random _random = Random();
+  double _dragAccumulatedDx = 0.0;
 
   @override
   void initState() {
@@ -245,6 +246,7 @@ class _BlockDropGameState extends State<BlockDropGame> {
       linesCleared = 0;
       gameOver = false;
       isPaused = false;
+      _dragAccumulatedDx = 0;
       widget.onScoreChange(0);
     });
     
@@ -361,15 +363,26 @@ class _BlockDropGameState extends State<BlockDropGame> {
               onTap: _handleTap,
               onLongPressStart: (_) => _handleLongPressStart(),
               onLongPressEnd: (_) => _handleLongPressEnd(),
+              onPanStart: (_) {
+                _dragAccumulatedDx = 0;
+              },
               onPanUpdate: (details) {
                 if ((widget.gameCompleted && !widget.casualMode) || isPaused || gameOver) return;
-                
-                const sensitivity = 0.1;
-                if (details.delta.dx > sensitivity) {
+
+                _dragAccumulatedDx += details.delta.dx;
+
+                while (_dragAccumulatedDx >= cellSize) {
                   _movePiece('right');
-                } else if (details.delta.dx < -sensitivity) {
-                  _movePiece('left');
+                  _dragAccumulatedDx -= cellSize;
                 }
+
+                while (_dragAccumulatedDx <= -cellSize) {
+                  _movePiece('left');
+                  _dragAccumulatedDx += cellSize;
+                }
+              },
+              onPanEnd: (_) {
+                _dragAccumulatedDx = 0;
               },
               child: Container(
                 width: gameWidth,
@@ -433,7 +446,7 @@ class _BlockDropGameState extends State<BlockDropGame> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              if (gameOver && widget.casualMode)
+                              if (gameOver)
                                 ElevatedButton(
                                   onPressed: _resetGame,
                                   style: ElevatedButton.styleFrom(
