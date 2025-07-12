@@ -157,7 +157,9 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   bool gameOver = false;
   int lastPlatformId = 0;
   int frameCount = 0;
-  int _pendingHorizontalInput = 0; // -1 for left, 1 for right, 0 for none
+
+  // Dodajemy zmienną do przechowywania kierunku skoku
+  double jumpDirection = 0; // -1 dla lewo, 1 dla prawo, 0 dla neutralny
 
   Timer? _gameLoopTimer;
   Size? _screenSize;
@@ -181,9 +183,9 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     final gameWidth = _screenSize!.width;
     final gameHeight = _screenSize!.height;
 
-    // Generate initial platforms
     final initialPlatforms = _generateInitialPlatforms(gameWidth, gameHeight);
-    final startX = initialPlatforms[0].x + (initialPlatforms[0].width - ballSize) / 2;
+    final startX =
+        initialPlatforms[0].x + (initialPlatforms[0].width - ballSize) / 2;
     final startY = initialPlatforms[0].y - ballSize;
 
     setState(() {
@@ -196,7 +198,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       isPaused = false;
       lastPlatformId = initialPlatforms.length - 1;
       frameCount = 0;
-      _pendingHorizontalInput = 0;
+      jumpDirection = 0;
     });
 
     _startGameLoop();
@@ -206,7 +208,6 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     final List<Platform> platformList = [];
     final random = Random();
 
-    // Ground platform
     platformList.add(Platform(
       id: 0,
       x: 0,
@@ -217,7 +218,6 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       color: const Color(0xFF333333),
     ));
 
-    // Generate initial platforms
     for (int i = 1; i < 10; i++) {
       platformList.add(Platform(
         id: i,
@@ -235,7 +235,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
 
   void _startGameLoop() {
     _gameLoopTimer?.cancel();
-    _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), _gameLoop);
+    _gameLoopTimer =
+        Timer.periodic(const Duration(milliseconds: 16), _gameLoop);
   }
 
   void _gameLoop(Timer timer) {
@@ -245,29 +246,22 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     final gameWidth = _screenSize!.width;
     final gameHeight = _screenSize!.height;
 
-    // Update platforms
     if (frameCount % 2 == 0) {
       _updatePlatforms(gameWidth);
       _addPlatformsIfNeeded(gameWidth);
     }
 
-    // Update ball physics
     _updateBall(gameWidth, gameHeight);
 
-    // Update particles
     if (frameCount % 3 == 0) {
       _updateParticles();
     }
 
-    // Update camera
     if (frameCount % 2 == 0) {
       _updateCamera(gameHeight);
     }
 
-    // Check game over
     _checkGameOver(gameHeight);
-
-    // Update score
     _updateScore();
 
     setState(() {});
@@ -308,29 +302,26 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
           width: platformWidth,
           moving: random.nextDouble() < 0.3,
           direction: random.nextBool() ? 1 : -1,
-          color: platformColors[newId % platformColors.length],
+          color: platformColors[i % platformColors.length],
         ));
       }
 
       lastPlatformId += 3;
 
-      // Remove platforms that are too far down
-      platforms = platforms
-          .where((p) => p.y > ball.y - _screenSize!.height * 1.5)
-          .toList();
+      platforms =
+          platforms.where((p) => p.y > ball.y - _screenSize!.height * 1.5).toList();
       platforms.addAll(newPlatforms);
     }
   }
 
   void _updateBall(double gameWidth, double gameHeight) {
-    // Ball physics
     double newVY = ball.vy + gravity;
-    double newVX = ball.vx * 0.995; // Slight friction
+    double newVX = ball.vx;
     double newX = ball.x + newVX;
     double newY = ball.y + newVY;
     final lastY = ball.y;
 
-    // Wall collision
+    // Kolizja ze ścianami
     if (newX <= 0) {
       newX = 0;
       newVX = newVX.abs() * wallBounceDamping;
@@ -339,24 +330,22 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       newVX = -newVX.abs() * wallBounceDamping;
     }
 
-    // Platform collision
+    // Sprawdzenie kolizji z platformami
     final collision = _checkPlatformCollision(newX, newY, newVY, lastY);
     if (collision != null) {
       newY = collision.y - ballSize;
-      newVY = jumpForce;
+      newVY = jumpForce; // Auto-jump
 
-      // Apply pending input on jump
-      if (_pendingHorizontalInput != 0) {
-        newVX = _pendingHorizontalInput * horizontalSpeed;
-        _pendingHorizontalInput = 0; // Reset after use
-      } else {
-        newVX = 0; // Jump straight up if no input
+      // Zastosowanie kierunku skoku ustawionego przez gracza
+      if (jumpDirection != 0) {
+        newVX = jumpDirection * horizontalSpeed;
       }
 
+      // Dodatkowy efekt od ruchomej platformy
       if (collision.moving) {
-        newVX += collision.direction * 0.3;
+        newVX += collision.direction * 0.5;
       }
-      // Create particles
+
       if (frameCount % 3 == 0) {
         _createParticles(newX, newY, collision.color, 1);
       }
@@ -365,8 +354,9 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     ball = Ball(x: newX, y: newY, vx: newVX, vy: newVY, lastY: lastY);
   }
 
-  Platform? _checkPlatformCollision(double ballX, double ballY, double ballVY, double lastY) {
-    if (ballVY <= 0) return null;
+  Platform? _checkPlatformCollision(
+      double ballX, double ballY, double ballVY, double lastY) {
+    if (ballVY <= 0) return null; // Only check when falling
 
     final ballRight = ballX + ballSize;
     final ballLeft = ballX;
@@ -378,11 +368,9 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       final platTop = platform.y;
       final platBottom = platform.y + platformHeight;
 
-      // Quick bounds check
       if (ballRight < platLeft || ballLeft > platRight) continue;
       if (ballBottom < platTop || ballY > platBottom) continue;
 
-      // Check if ball crossed platform in this frame
       final wasAbove = lastY + ballSize <= platTop;
       final isBelow = ballBottom >= platTop;
 
@@ -415,18 +403,17 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   void _updateParticles() {
     particles = particles
         .map((p) => p.copyWith(
-              x: p.x + p.vx,
-              y: p.y + p.vy,
-              vy: p.vy + 0.2,
-              life: p.life - particleDecay,
-            ))
+      x: p.x + p.vx,
+      y: p.y + p.vy,
+      vy: p.vy + 0.2,
+      life: p.life - particleDecay,
+    ))
         .where((p) => p.life > 0)
         .toList();
   }
 
   void _updateCamera(double gameHeight) {
-    final double targetCameraY =
-        max(gameHeight * 0.4 - ball.y, 0).toDouble();
+    final double targetCameraY = max(gameHeight * 0.4 - ball.y, 0).toDouble();
     if ((targetCameraY - cameraY).abs() > 1) {
       cameraY = targetCameraY;
     }
@@ -454,14 +441,13 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     if (_screenSize != null) {
       final isLeft = details.localPosition.dx < _screenSize!.width / 2;
 
-      // Invert controls: tap right to jump left and tap left to jump right
-      _pendingHorizontalInput = isLeft ? 1 : -1;
+      // Ustawiamy kierunek skoku
+      jumpDirection = isLeft ? -1 : 1;
 
-      // Immediately apply jump with directional velocity
-      ball = ball.copyWith(
-        vx: _pendingHorizontalInput * horizontalSpeed,
-        vy: jumpForce,
-      );
+      // Natychmiast zmieniamy prędkość poziomą piłki
+      ball = ball.copyWith(vx: jumpDirection * horizontalSpeed);
+
+      print("Tap detected. Jump direction set to: $jumpDirection, Ball VX: ${ball.vx}");
     }
   }
 
@@ -475,7 +461,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       setState(() {
         isPaused = !isPaused;
       });
-      
+
       if (isPaused) {
         _gameLoopTimer?.cancel();
       } else {
@@ -506,6 +492,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
       backgroundColor: const Color(0xFF000000),
       body: GestureDetector(
         onTapDown: _handleTap,
+        behavior: HitTestBehavior.opaque,
         child: Stack(
           children: [
             // Game Area
@@ -514,7 +501,6 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
               height: gameHeight,
               child: Stack(
                 children: [
-                  // World container with camera translation
                   Transform.translate(
                     offset: Offset(0, cameraY),
                     child: SizedBox(
@@ -522,7 +508,6 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                       height: 4000,
                       child: Stack(
                         children: [
-                          // Platforms
                           ...platforms.map((platform) {
                             final screenY = platform.y + cameraY;
                             if (screenY < -100 || screenY > gameHeight + 100) {
@@ -541,8 +526,6 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                               ),
                             );
                           }).toList(),
-
-                          // Ball
                           Positioned(
                             left: ball.x,
                             top: ball.y,
@@ -552,12 +535,11 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF4ecdc4),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.white, width: 2),
+                                border:
+                                Border.all(color: Colors.white, width: 2),
                               ),
                             ),
                           ),
-
-                          // Particles
                           ...particles.map((particle) {
                             final screenY = particle.y + cameraY;
                             if (screenY < -50 || screenY > gameHeight + 50) {
@@ -570,7 +552,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                                 width: 4,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: particle.color.withOpacity(particle.life),
+                                  color: particle.color
+                                      .withOpacity(particle.life),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -591,7 +574,8 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                 left: 16,
                 right: 16,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(12),
@@ -619,21 +603,42 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                           ),
                         ],
                       ),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF333333),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            isPaused ? Icons.play_arrow : Icons.pause,
-                            color: Colors.white,
-                            size: 20,
+                      Row(
+                        children: [
+                          // Wskaźnik kierunku skoku
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF333333),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              jumpDirection == -1 ? '← Left' :
+                              jumpDirection == 1 ? 'Right →' : 'Neutral',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          onPressed: _togglePause,
-                        ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF333333),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                isPaused ? Icons.play_arrow : Icons.pause,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              onPressed: _togglePause,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -706,7 +711,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
-                    'Tap the left side to jump left or the right side to jump right.\nAvoid falling down and climb as high as possible.',
+                    'Tap left or right side to change direction!\nThe ball will immediately move in that direction.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
