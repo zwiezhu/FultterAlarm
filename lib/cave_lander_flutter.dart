@@ -48,10 +48,10 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   static const double speedMin = 0.2;
   static const double speedMax = 2.5;
   static const double speedAccelDist = 1000;
-  static const double gravity = 0.28;
-  static const double engineForce = 0.65;
+  static const double gravity = 0.20;
+  static const double engineForce = 0.45;
   static const double counterForceMult = 1.5;
-  static const double rotationSpeed = 0.1;
+  static const double rotationSpeed = 0.05;
 
   // Parametry jaskini
   static const double caveSection = 32;
@@ -71,7 +71,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   double shipVangle = 0;
   bool canMove = false;
   double minPlatformHeight = 0;
-  
+
   List<CaveSection> caveSections = [];
   List<Diamond> diamonds = [];
   double caveOffset = 0;
@@ -79,7 +79,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   int diamondScore = 0;
   bool isPaused = false;
   bool gameOver = false;
-  
+
   late double gameWidth;
   late double gameHeight;
   late double groundLevel;
@@ -88,7 +88,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   late double shipStartX;
   late double shipStartY;
   late double initialCaveOffset;
-  
+
   bool leftEngine = false;
   bool rightEngine = false;
   Timer? gameLoopTimer;
@@ -112,7 +112,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
     shipStartY = groundLevel - shipHeight - 40;
     initialCaveOffset = screenCenterX - shipStartX;
     minPlatformHeight = shipStartY;
-    
+
     if (caveSections.isEmpty) {
       _initializeGame();
     }
@@ -122,8 +122,9 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
     final seed = random.nextDouble();
     caveSections = _generateRandomCaveSections(64, 0, gameHeight / 2, caveWidthStart, seed);
     diamonds = _generateDiamonds(caveSections);
-    
+
     setState(() {
+      started = false;  // Dodano resetowanie started
       shipX = shipStartX;
       shipY = shipStartY;
       shipAngle = 0;
@@ -137,28 +138,30 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
       diamondScore = 0;
       isPaused = false;
       gameOver = false;
+      leftEngine = false;  // Dodano resetowanie silników
+      rightEngine = false;  // Dodano resetowanie silników
     });
   }
 
   List<CaveSection> _generateRandomCaveSections(
-    int count,
-    int startIdx,
-    double initialMid,
-    double initialWidth,
-    double seed,
-  ) {
+      int count,
+      int startIdx,
+      double initialMid,
+      double initialWidth,
+      double seed,
+      ) {
     final List<CaveSection> sections = [];
     double prevMid = initialMid;
     double prevWidth = initialWidth;
-    
+
     final waveFreq = 8 + random.nextDouble() * 16;
     final waveAmp = 20 + random.nextDouble() * 40;
     final noiseStrength = 5 + random.nextDouble() * 15;
     final verticalTrend = (random.nextDouble() - 0.5) * 0.3;
-    
+
     for (int i = 0; i < count; i++) {
       final idx = startIdx + i;
-      
+
       // Płaska platforma startowa
       if (idx < platformSections) {
         sections.add(CaveSection(
@@ -172,7 +175,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
         }
         continue;
       }
-      
+
       // Przejście z platformy do jaskini
       if (idx == platformSections) {
         final platformHeight = groundLevel - ceilingLevel;
@@ -186,16 +189,16 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
         prevWidth = transitionWidth;
         continue;
       }
-      
+
       // Właściwa jaskinia
       final progress = min(1.0, (idx - platformSections - 1) / 500);
       final widthTarget = caveWidthMin + (caveWidthMax - caveWidthMin) * (1 - progress);
       final widthNow = prevWidth * caveShrinkRate + widthTarget * (1 - caveShrinkRate);
-      
+
       final waveOffset = sin((idx + seed * 100) / waveFreq) * waveAmp;
       final noiseOffset = (sin((idx + seed * 50) * 0.1) + sin((idx + seed * 30) * 0.3)) * noiseStrength;
       final trendOffset = (idx - platformSections - 1) * verticalTrend;
-      
+
       double mid = prevMid + waveOffset * 0.15 + noiseOffset + trendOffset + (random.nextDouble() - 0.5) * 8;
       mid = max(caveWidthMax, min(gameHeight - caveWidthMax, mid));
       final widthFinal = max(widthNow, widthTarget);
@@ -256,7 +259,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
     if (thrustForce > 0) {
       final horizontalThrust = thrustForce * sin(angleRad);
       final verticalThrust = thrustForce * cos(angleRad);
-      
+
       if (canMove) {
         shipVx += horizontalThrust;
       }
@@ -380,14 +383,14 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
     final lastMid = (last.top + last.bottom) / 2;
     final lastWidth = last.bottom - last.top;
     final moreSections = _generateRandomCaveSections(32, caveSections.length, lastMid, lastWidth, random.nextDouble());
-    
+
     final newDiamonds = _generateDiamonds(moreSections);
     final adjustedDiamonds = newDiamonds.map((d) => Diamond(
       id: d.id + caveSections.length,
       x: d.x,
       y: d.y,
     )).toList();
-    
+
     caveSections.addAll(moreSections);
     diamonds.addAll(adjustedDiamonds);
   }
@@ -423,7 +426,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
       _startGame();
       return;
     }
-    
+
     if (gameOver) {
       _resetGame();
       return;
@@ -440,64 +443,73 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   Widget build(BuildContext context) {
     final speedProgress = min(1.0, distanceScore / speedAccelDist);
     final forwardSpeed = speedMin + (speedMax - speedMin) * speedProgress;
-    
+
     final visibleStart = max(0, (-caveOffset / caveSection).floor() - 2);
     final visibleCount = (gameWidth / caveSection).ceil() + 4;
     final visibleSections = caveSections.skip(visibleStart).take(visibleCount).toList();
-    final visibleDiamonds = diamonds.where((d) => 
-      d.x + caveOffset > -32 && d.x + caveOffset < gameWidth + 32
+    final visibleDiamonds = diamonds.where((d) =>
+    d.x + caveOffset > -32 && d.x + caveOffset < gameWidth + 32
     ).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFF1a1a2e),
-      body: Stack(
-        children: [
-          // Header
-          Positioned(
-            top: 50,
-            left: 20,
-            right: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      const Text('Score', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(
-                        '${distanceScore + diamondScore}',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFa55eea)),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text('Speed: ${forwardSpeed.toStringAsFixed(1)} m/s', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      if (!canMove)
-                        const Text('Movement Locked', style: TextStyle(fontSize: 10, color: Color(0xFFf7b731))),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: gameOver ? null : _togglePause,
-                    icon: Icon(
-                      isPaused ? Icons.play_arrow : Icons.pause,
-                      color: Colors.white,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _handleTouch,
+        child: Stack(
+          children: [
+            // Header
+            Positioned(
+              top: 50,
+              left: 20,
+              right: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        const Text('Score', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                          '${distanceScore + diamondScore}',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFa55eea)),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    Column(
+                      children: [
+                        Text('Speed: ${forwardSpeed.toStringAsFixed(1)} m/s', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        if (!canMove)
+                          const Text('Movement Locked', style: TextStyle(fontSize: 10, color: Color(0xFFf7b731))),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: gameOver ? null : _togglePause,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          isPaused ? Icons.play_arrow : Icons.pause,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Game Area
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _handleTouch,
+            // Game Area
+            Positioned.fill(
               child: Container(
                 color: Colors.transparent,
                 child: Stack(
@@ -507,7 +519,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
                       final idx = entry.key;
                       final section = entry.value;
                       final i = visibleStart + idx;
-                      
+
                       return Stack(
                         children: [
                           // Ceiling
@@ -625,120 +637,124 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
                 ),
               ),
             ),
-          ),
 
-          // Control buttons
-          Positioned(
-            bottom: 30,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                GestureDetector(
-                  onTapDown: (_) => setState(() => leftEngine = true),
-                  onTapUp: (_) => setState(() => leftEngine = false),
-                  onTapCancel: () => setState(() => leftEngine = false),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0xFFa55eea), width: 2),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'L',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            // Control buttons
+            Positioned(
+              bottom: 30,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  GestureDetector(
+                    onTapDown: (_) => setState(() => leftEngine = true),
+                    onTapUp: (_) => setState(() => leftEngine = false),
+                    onTapCancel: () => setState(() => leftEngine = false),
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFa55eea), width: 2),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'L',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTapDown: (_) => setState(() => rightEngine = true),
-                  onTapUp: (_) => setState(() => rightEngine = false),
-                  onTapCancel: () => setState(() => rightEngine = false),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0xFFa55eea), width: 2),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'R',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  GestureDetector(
+                    onTapDown: (_) => setState(() => rightEngine = true),
+                    onTapUp: (_) => setState(() => rightEngine = false),
+                    onTapCancel: () => setState(() => rightEngine = false),
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFa55eea), width: 2),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'R',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Overlays
-          if (!started || gameOver || isPaused)
-            Container(
-              color: Colors.black.withOpacity(0.75),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      gameOver ? 'GAME OVER' : !started ? 'CAVE LANDER' : 'PAUSED',
-                      style: const TextStyle(
-                        fontSize: 48,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    if (gameOver)
-                      Text(
-                        'Distance: ${distanceScore + diamondScore}m',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          color: Color(0xFFa55eea),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    Text(
-                      !started
-                          ? 'Tap to start\nTap left/right to control thrusters\nNavigate through the cave!\n\nMovement locked until you lift off from platform'
-                          : gameOver
-                              ? 'Tap anywhere to play again'
-                              : 'Tap to resume',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (gameOver && widget.casualMode)
-                      const SizedBox(height: 20),
-                    if (gameOver && widget.casualMode)
-                      ElevatedButton.icon(
-                        onPressed: _resetGame,
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        label: const Text('Play Again', style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFa55eea),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
             ),
-        ],
+
+            // Overlays
+            if (!started || gameOver || isPaused)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _handleTouch,
+                child: Container(
+                  color: Colors.black.withOpacity(0.75),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          gameOver ? 'GAME OVER' : !started ? 'CAVE LANDER' : 'PAUSED',
+                          style: const TextStyle(
+                            fontSize: 48,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        if (gameOver)
+                          Text(
+                            'Distance: ${distanceScore + diamondScore}m',
+                            style: const TextStyle(
+                              fontSize: 32,
+                              color: Color(0xFFa55eea),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+                        Text(
+                          !started
+                              ? 'Tap to start\nTap left/right to control thrusters\nNavigate through the cave!\n\nMovement locked until you lift off from platform'
+                              : gameOver
+                              ? 'Tap anywhere to play again'
+                              : 'Tap to resume',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            height: 1.5,
+                          ),
+                        ),
+                        if (gameOver && widget.casualMode)
+                          const SizedBox(height: 20),
+                        if (gameOver && widget.casualMode)
+                          ElevatedButton.icon(
+                            onPressed: _resetGame,
+                            icon: const Icon(Icons.refresh, color: Colors.white),
+                            label: const Text('Play Again', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFa55eea),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

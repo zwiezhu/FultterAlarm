@@ -35,6 +35,54 @@ class GameListScreen extends StatelessWidget {
               Navigator.pushNamed(context, '/icy_tower_game');
             },
           ),
+          ListTile(
+            title: const Text('Cave Lander'),
+            onTap: () {
+              Navigator.pushNamed(context, '/cave_lander_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Wall Kickers'),
+            onTap: () {
+              Navigator.pushNamed(context, '/wall_kickers_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Ball Runner'),
+            onTap: () {
+              Navigator.pushNamed(context, '/ball_runner_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Swipe Tiles'),
+            onTap: () {
+              Navigator.pushNamed(context, '/swipe_tiles_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Memory Match'),
+            onTap: () {
+              Navigator.pushNamed(context, '/memory_match_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Number Rush'),
+            onTap: () {
+              Navigator.pushNamed(context, '/number_rush_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Sudoku Game'),
+            onTap: () {
+              Navigator.pushNamed(context, '/sudoku_game');
+            },
+          ),
+          ListTile(
+            title: const Text('Block Drop Game'),
+            onTap: () {
+              Navigator.pushNamed(context, '/block_drop_game');
+            },
+          ),
         ],
       ),
     );

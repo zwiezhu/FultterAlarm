@@ -325,9 +325,11 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     if (newX <= 0) {
       newX = 0;
       newVX = newVX.abs() * wallBounceDamping;
+      jumpDirection = 1;
     } else if (newX >= gameWidth - ballSize) {
       newX = gameWidth - ballSize;
       newVX = -newVX.abs() * wallBounceDamping;
+      jumpDirection = -1;
     }
 
     // Sprawdzenie kolizji z platformami
