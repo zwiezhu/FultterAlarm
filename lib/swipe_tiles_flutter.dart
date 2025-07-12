@@ -77,7 +77,16 @@ enum TileType { swipe, hold }
 enum Direction { up, down, left, right }
 
 class SwipeTilesGameScreen extends StatefulWidget {
-  const SwipeTilesGameScreen({super.key});
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
+  
+  const SwipeTilesGameScreen({
+    super.key,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
+  });
 
   @override
   State<SwipeTilesGameScreen> createState() => _SwipeTilesGameScreenState();
@@ -120,18 +129,7 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeGame();
-    });
-  }
-
-  void _initializeGame() {
-    final mediaQuery = MediaQuery.of(context);
-    gameWidth = mediaQuery.size.width;
-    gameHeight = mediaQuery.size.height - mediaQuery.padding.top;
-    tileSize = gameWidth / cols;
-    
-    _resetGame();
+    // Game will be initialized in build method when context is available
   }
 
   void _resetGame() {
@@ -387,6 +385,9 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
     final col = (details.localPosition.dx / tileSize).floor();
     final y = details.localPosition.dy;
     
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
+    
     // Check for hold tiles
     for (final tile in tiles) {
       if (tile.type == TileType.hold &&
@@ -461,6 +462,9 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
     _addFlashEffect(target, const Color(0xFF00ff88));
     _updateScore(1);
     
+    // Notify parent about user interaction
+    widget.onUserInteraction?.call();
+    
     setState(() {
       tiles.removeWhere((tile) => tile.id == target!.id);
     });
@@ -490,7 +494,20 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize game dimensions if not already done
     if (gameWidth == 0) {
+      final mediaQuery = MediaQuery.of(context);
+      gameWidth = mediaQuery.size.width;
+      gameHeight = mediaQuery.size.height - mediaQuery.padding.top;
+      tileSize = gameWidth / cols;
+      
+      // Start the game after dimensions are set
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _resetGame();
+        }
+      });
+      
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -520,25 +537,43 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
               ),
             ),
             
-            // Score display
+            // Game info display
             if (!isPaused && !gameOver)
               Positioned(
                 top: 50,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$score',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                left: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.remainingTime != null)
+                      Text(
+                        'Pozostało: ${widget.remainingTime}s',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    if (widget.inactivityTime != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Nieaktywność: ${widget.inactivityTime}s',
+                        style: TextStyle(
+                          color: widget.inactivityTime! <= 5 ? Colors.red : Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Wynik: $score',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             

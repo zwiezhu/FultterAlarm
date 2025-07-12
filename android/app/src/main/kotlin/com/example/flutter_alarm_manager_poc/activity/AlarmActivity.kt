@@ -178,9 +178,9 @@ class AlarmActivity : ComponentActivity() {
         Log.d(TAG, "Initializing volume control")
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         
-        // Use STREAM_ALARM for volume control since alarm sound uses USAGE_ALARM
-        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        // Use STREAM_MUSIC for higher volume but with USAGE_ALARM attributes
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         targetVolume = maxVolume // Always target maximum volume
         
         Log.d(TAG, "Volume settings - Max: $maxVolume, Original: $originalVolume, Target: $targetVolume")
@@ -246,11 +246,11 @@ class AlarmActivity : ComponentActivity() {
         
         // Define the Runnable that checks and enforces the volume level
         volumeCheckRunnable = Runnable {
-            val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+            val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
             Log.d(TAG, "Volume check - Current: $currentVolume, Target: $targetVolume")
             if (currentVolume != targetVolume) {
                 Log.d(TAG, "Volume enforcement: restoring volume to $targetVolume (was: $currentVolume)")
-                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
             }
             // Schedule the next check after 1000ms
             handler.postDelayed(volumeCheckRunnable!!, 1000)
@@ -284,7 +284,7 @@ class AlarmActivity : ComponentActivity() {
         abandonAudioFocus()
         
         // Restore original volume
-        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, originalVolume, 0)
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
         Log.d(TAG, "Restored volume to original: $originalVolume")
 
         // Only destroy the engine when the notification activity is launched from killed state
