@@ -66,6 +66,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   Timer? _patternTimer;
   Timer? _matchTimer;
   Timer? _countdownTimer;
+  Timer? _gameOverTimer;
 
   @override
   void initState() {
@@ -78,6 +79,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     _patternTimer?.cancel();
     _matchTimer?.cancel();
     _countdownTimer?.cancel();
+    _gameOverTimer?.cancel();
     super.dispose();
   }
 
@@ -148,6 +150,8 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
             // Check if game is complete
             if (matches == totalPairs) {
               gameOver = true;
+              _gameOverTimer =
+                  Timer(const Duration(seconds: 5), () => resetGame());
             }
 
             flippedCards.clear();
@@ -170,6 +174,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     _patternTimer?.cancel();
     _matchTimer?.cancel();
     _countdownTimer?.cancel();
+    _gameOverTimer?.cancel();
 
     setState(() {
       cards = generateCards();
