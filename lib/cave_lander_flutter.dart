@@ -80,14 +80,14 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   bool isPaused = false;
   bool gameOver = false;
 
-  late double gameWidth;
-  late double gameHeight;
-  late double groundLevel;
-  late double ceilingLevel;
-  late double screenCenterX;
-  late double shipStartX;
-  late double shipStartY;
-  late double initialCaveOffset;
+  double gameWidth = 0;
+  double gameHeight = 0;
+  double groundLevel = 0;
+  double ceilingLevel = 0;
+  double screenCenterX = 0;
+  double shipStartX = 0;
+  double shipStartY = 0;
+  double initialCaveOffset = 0;
 
   bool leftEngine = false;
   bool rightEngine = false;
@@ -119,6 +119,20 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   }
 
   void _initializeGame() {
+    // Ensure dimensions are initialized
+    if (gameWidth == 0 || gameHeight == 0) {
+      final mediaQuery = MediaQuery.of(context);
+      gameWidth = mediaQuery.size.width;
+      gameHeight = mediaQuery.size.height - mediaQuery.padding.top;
+      groundLevel = gameHeight - 60;
+      ceilingLevel = min(500, gameHeight * 0.3);
+      screenCenterX = gameWidth / 2 - shipWidth / 2;
+      shipStartX = caveSection * 2;
+      shipStartY = groundLevel - shipHeight - 40;
+      initialCaveOffset = screenCenterX - shipStartX;
+      minPlatformHeight = shipStartY;
+    }
+    
     final seed = random.nextDouble();
     caveSections = _generateRandomCaveSections(64, 0, gameHeight / 2, caveWidthStart, seed);
     diamonds = _generateDiamonds(caveSections);

@@ -109,9 +109,9 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   int gameKey = 0;
   
   // UI variables
-  late double gameWidth;
-  late double gameHeight;
-  late double tileSize;
+  double gameWidth = 0;
+  double gameHeight = 0;
+  double tileSize = 0;
   
   // Timers
   Timer? _gameLoopTimer;
@@ -188,6 +188,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _updateTiles() {
+    // Ensure dimensions are initialized
+    if (gameWidth == 0 || gameHeight == 0 || tileSize == 0) {
+      return;
+    }
+    
     setState(() {
       tiles = tiles.map((tile) {
         if (tile.type == TileType.hold) {
@@ -227,6 +232,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _checkGameOver() {
+    // Ensure dimensions are initialized
+    if (gameHeight == 0 || tileSize == 0) {
+      return;
+    }
+    
     for (final tile in tiles) {
       if (tile.type == TileType.swipe && tile.y + tileSize > gameHeight - 3) {
         _handleGameOver();
@@ -236,6 +246,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _addTile() {
+    // Ensure dimensions are initialized
+    if (gameWidth == 0 || tileSize == 0) {
+      return;
+    }
+    
     final hasActiveHold = tiles.any((t) => t.type == TileType.hold && t.y > -tileSize * 2);
     
     final availableColumns = <int>[];
@@ -280,6 +295,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   bool _canAddTileInColumn(int col, double newTileHeight) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return false;
+    }
+    
     final tilesInColumn = tiles.where((tile) => tile.col == col).toList();
     
     if (tilesInColumn.isEmpty) return true;
@@ -317,6 +337,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _addFlashEffect(GameTile tile, Color color) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return;
+    }
+    
     final flash = FlashEffect(
       id: _flashId++,
       x: tile.col * tileSize,
@@ -381,6 +406,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _onPanStart(DragStartDetails details) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return;
+    }
+    
     _panStart = details.localPosition;
     final col = (details.localPosition.dx / tileSize).floor();
     final y = details.localPosition.dy;
@@ -411,6 +441,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return;
+    }
+    
     if (_panStart == null) return;
     
     final dx = details.localPosition.dx - _panStart!.dx;
@@ -644,6 +679,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   Widget _buildTile(GameTile tile) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return const SizedBox.shrink();
+    }
+    
     if (tile.type == TileType.swipe) {
       return Positioned(
         left: tile.col * tileSize,
@@ -721,6 +761,11 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   Widget _buildArrow(Direction direction) {
+    // Ensure dimensions are initialized
+    if (tileSize == 0) {
+      return const SizedBox.shrink();
+    }
+    
     IconData icon;
     switch (direction) {
       case Direction.up:
