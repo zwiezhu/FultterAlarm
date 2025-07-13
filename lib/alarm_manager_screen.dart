@@ -25,13 +25,16 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
     super.initState();
     // Inicjalizuj bazę danych
     DatabaseService.instance.initializeHive();
-    // Uruchom scheduler alarmów
-    AlarmSchedulerService.instance.startScheduler();
+    // Uruchom scheduler alarmów (jeśli nie jest już uruchomiony)
+    if (!AlarmSchedulerService.instance.isRunning) {
+      AlarmSchedulerService.instance.startScheduler();
+    }
   }
 
   @override
   void dispose() {
-    AlarmSchedulerService.instance.stopScheduler();
+    // Don't stop the scheduler when leaving this screen
+    // The scheduler should keep running in the background
     super.dispose();
   }
 

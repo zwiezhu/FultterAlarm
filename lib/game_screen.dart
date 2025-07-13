@@ -20,7 +20,16 @@ class Tile {
 }
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
+  
+  const GameScreen({
+    super.key,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
+  });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -114,6 +123,9 @@ class _GameScreenState extends State<GameScreen> {
 
   void _handleTileTap(Tile tile) {
     if (!tile.active || gameOver || isPaused) return;
+
+    // Call user interaction callback
+    widget.onUserInteraction?.call();
 
     setState(() {
       // Remove the tapped tile
@@ -257,6 +269,36 @@ class _GameScreenState extends State<GameScreen> {
                             color: Colors.greenAccent,
                           ),
                         ),
+                        if (widget.remainingTime != null) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Pozostały czas',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                          Text(
+                            '${widget.remainingTime}s',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                        if (widget.inactivityTime != null) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Timer bezczynności',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                          Text(
+                            '${widget.inactivityTime}s',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     IconButton(

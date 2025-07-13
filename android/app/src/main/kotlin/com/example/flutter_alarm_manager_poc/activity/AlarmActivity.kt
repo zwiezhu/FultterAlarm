@@ -12,6 +12,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import android.app.KeyguardManager
+import android.content.Intent
 import com.example.flutter_alarm_manager_poc.alarmNotificationService.AlarmNotificationService
 import com.example.flutter_alarm_manager_poc.alarmNotificationService.AlarmNotificationServiceImpl
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
@@ -50,9 +52,27 @@ class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         actionBar?.hide()
+        
+        // Wake up the screen and show on lock screen
+        window.addFlags(
+            android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+            android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+        )
+        
+        // Unlock the screen if it's locked
+        val keyguardManager = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (keyguardManager.isKeyguardLocked) {
+                Log.d(TAG, "Screen is locked, attempting to unlock...")
+                // The flags above should handle this, but we can add additional logic if needed
+            }
+        }
 
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val alarmTime = intent.getLongExtra("ALARM_TIME", System.currentTimeMillis())
+        val gameType = intent.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
 
         // Initialize volume control
         initializeVolumeControl()
@@ -118,45 +138,19 @@ class AlarmActivity : ComponentActivity() {
                             // Pass alarm time and gameType through method channel and navigate
                             val alarmArgs = mapOf(
                                 "alarmTime" to alarmTime,
-                                "gameType" to "piano_tiles" // docelowo dynamicznie
+                                "gameType" to gameType
                             )
                             channel.invokeMethod("navigateToAlarmGame", alarmArgs)
                             
-                            // Create new Flutter engine with MethodChannel
-                            val newEngine = FlutterEngine(this)
-                            newEngine.navigationChannel.setInitialRoute("/alarm_game")
-                            newEngine.dartExecutor.executeDartEntrypoint(
-                                DartExecutor.DartEntrypoint.createDefault()
-                            )
-                            
-                            // Register MethodChannel for alarm sound
-                            MethodChannel(newEngine.dartExecutor.binaryMessenger, CHANNEL)
-                                .setMethodCallHandler { call, result ->
-                                    when (call.method) {
-                                        "startAlarmSound" -> {
-                                            Log.d(TAG, "Starting alarm sound from new engine")
-                                            alarmSoundService.startAlarmSound()
-                                            result.success(null)
-                                        }
-                                        "stopAlarmSound" -> {
-                                            Log.d(TAG, "Stopping alarm sound from new engine")
-                                            alarmSoundService.stopAlarmSound()
-                                            result.success(null)
-                                        }
-                                        else -> result.notImplemented()
-                                    }
-                                }
-                            
-                            // Cache the engine FIRST
-                            FlutterEngineCache.getInstance().put("alarm_game_engine", newEngine)
-                            
-                            // Then create the intent with cached engine
-                            val intent = io.flutter.embedding.android.FlutterActivity
-                                .withCachedEngine("alarm_game_engine")
-                                .build(this)
+                            // Start AlarmFlutterActivity with game type
+                            val intent = Intent(this, AlarmFlutterActivity::class.java).apply {
+                                putExtra("alarmTime", alarmTime)
+                                putExtra("gameType", gameType)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            }
                             
                             startActivity(intent)
-                            // finish() // <- zakomentowane na czas testu
+                            finish() // Close AlarmActivity after starting game
                         },
                         onSnooze = {
                             Log.d(TAG, "Snooze button clicked")

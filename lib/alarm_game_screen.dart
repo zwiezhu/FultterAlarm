@@ -7,6 +7,7 @@ import 'memory_match_flutter.dart';
 import 'number_rush_flutter.dart';
 import 'sudoku_game_flutter.dart';
 import 'ball_runner_flutter.dart';
+import 'game_screen.dart'; // Piano Tiles game
 
 class AlarmGameScreen extends StatefulWidget {
   final DateTime alarmTime;
@@ -198,6 +199,11 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
     // Return the appropriate game based on gameType
     switch (widget.gameType) {
       case 'piano_tiles':
+        return GameScreen(
+          onUserInteraction: _handleUserInteraction,
+          remainingTime: remainingSeconds,
+          inactivityTime: inactivityTimer,
+        );
       case 'swipe_tiles':
         return SwipeTilesGameScreen(
           onUserInteraction: _handleUserInteraction,
@@ -232,8 +238,8 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           inactivityTime: inactivityTimer,
         );
       default:
-        // Default to swipe tiles game
-        return SwipeTilesGameScreen(
+        // Default to piano tiles game
+        return GameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,

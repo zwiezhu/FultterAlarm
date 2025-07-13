@@ -17,6 +17,16 @@ class AlarmMethodChannel {
     }
   }
 
+  static Future<void> scheduleAlarmWithGame(String gameType) async {
+    try {
+      log(name: name, 'Scheduling alarm with game: $gameType');
+      await platform.invokeMethod('scheduleAlarmWithGame', {'gameType': gameType});
+      log(name: name, 'Alarm with game scheduled successfully');
+    } on PlatformException catch (e) {
+      log("Failed to schedule alarm with game: '${e.message}'.");
+    }
+  }
+
   static Future<void> startAlarmSound() async {
     try {
       log(name: name, 'Starting alarm sound...');
@@ -93,6 +103,11 @@ class AlarmMethodChannel {
         break;
       case 'navigateToAlarmGame':
         log(name: name, 'Navigating to alarm game');
+        final args = Map<String, dynamic>.from(call.arguments);
+        setPendingAlarmArgs(args);
+        break;
+      case 'setPendingAlarmArgs':
+        log(name: name, 'Setting pending alarm args');
         final args = Map<String, dynamic>.from(call.arguments);
         setPendingAlarmArgs(args);
         break;

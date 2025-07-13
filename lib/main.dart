@@ -16,12 +16,17 @@ import 'package:flutter_alarm_manager_poc/number_rush_flutter.dart';
 import 'package:flutter_alarm_manager_poc/sudoku_game_flutter.dart';
 import 'package:flutter_alarm_manager_poc/block_drop_game_flutter.dart';
 import 'package:flutter_alarm_manager_poc/alarm_game_screen.dart';
+import 'package:flutter_alarm_manager_poc/services/alarm_scheduler_service.dart';
 import 'utils/alarm_method_channel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseService.instance.initializeHive();
   AlarmMethodChannel.initialize();
+  
+  // Start the alarm scheduler
+  AlarmSchedulerService.instance.startScheduler();
+  
   runApp(const MyApp());
 }
 
@@ -65,6 +70,22 @@ class MyApp extends StatelessWidget {
               args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
             } catch (e) {
               // Arguments not available, try method channel
+            }
+            
+            // If no arguments from route, try to parse from URL parameters
+            if (args == null) {
+              final uri = Uri.parse(window.defaultRouteName);
+              if (uri.path == '/alarm_game') {
+                final alarmTimeParam = uri.queryParameters['alarmTime'];
+                final gameTypeParam = uri.queryParameters['gameType'];
+                
+                if (alarmTimeParam != null && gameTypeParam != null) {
+                  args = {
+                    'alarmTime': int.tryParse(alarmTimeParam) ?? DateTime.now().millisecondsSinceEpoch,
+                    'gameType': gameTypeParam,
+                  };
+                }
+              }
             }
             
             args ??= AlarmMethodChannel.getPendingAlarmArgs();

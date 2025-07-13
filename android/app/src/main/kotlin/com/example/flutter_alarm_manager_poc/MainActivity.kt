@@ -48,6 +48,12 @@ class MainActivity : FlutterActivity() {
                     scheduleAlarm()
                     result.success(null)
                 }
+                "scheduleAlarmWithGame" -> {
+                    Log.d(TAG, "Method Channel Invoked, Alarm Scheduling with Game")
+                    val gameType = call.argument<String>("gameType") ?: "piano_tiles"
+                    scheduleAlarmWithGame(gameType)
+                    result.success(null)
+                }
                 "alarmAccepted" -> {
                     Log.d(TAG, "Alarm Accepted")
                     // Handle alarm accepted
@@ -95,11 +101,19 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun scheduleAlarm() {
-
         val alarmItem = AlarmItem(
             id = 1,
             message = "Alarm has been ringing"
         )
-        alarmScheduler.schedule(alarmItem)
+        alarmScheduler.schedule(alarmItem, 5) // Schedule for 5 seconds from now
+    }
+
+    private fun scheduleAlarmWithGame(gameType: String) {
+        val alarmItem = AlarmItem(
+            id = 1,
+            message = "Alarm has been ringing",
+            gameType = gameType
+        )
+        alarmScheduler.schedule(alarmItem, 5) // Schedule for 5 seconds from now
     }
 }

@@ -27,6 +27,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("ALARM_ID", alarmItem.id)
             putExtra("ALARM_MESSAGE", alarmItem.message)
+            putExtra("ALARM_GAME_TYPE", alarmItem.gameType)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

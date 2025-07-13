@@ -26,15 +26,17 @@ class AlarmReceiver : BroadcastReceiver() {
         
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val message = intent?.getStringExtra("ALARM_MESSAGE") ?: "Alarm!"
+        val gameType = intent?.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
         val alarmTime = System.currentTimeMillis()
         
-        Log.d(TAG, "Alarm triggered - ID: $alarmId, Message: $message, Time: $alarmTime")
+        Log.d(TAG, "Alarm triggered - ID: $alarmId, Message: $message, Game: $gameType, Time: $alarmTime")
         
         // Always show the AlarmActivity regardless of app state
         val alarmIntent = Intent(context, AlarmActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_USER_ACTION
             putExtra("ALARM_ID", alarmId)
             putExtra("ALARM_MESSAGE", message)
+            putExtra("ALARM_GAME_TYPE", gameType)
             putExtra("ALARM_TIME", alarmTime)
         }
         

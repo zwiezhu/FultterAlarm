@@ -9,6 +9,10 @@ class AlarmSchedulerService {
   static AlarmSchedulerService? _instance;
   Timer? _checkTimer;
   List<AlarmSettings> _activeAlarms = [];
+  Set<String> _triggeredAlarms = {}; // Track triggered alarms to avoid duplicates
+  bool _isRunning = false;
+  
+  bool get isRunning => _isRunning;
 
   // Private constructor
   AlarmSchedulerService._();
@@ -21,14 +25,35 @@ class AlarmSchedulerService {
 
   // Start the alarm scheduler
   void startScheduler() {
+    if (_isRunning) return; // Already running
+    
     _loadActiveAlarms();
     _scheduleNextCheck();
+    _scheduleDailyReset();
+    _isRunning = true;
+    log('AlarmSchedulerService started');
   }
 
   // Stop the alarm scheduler
   void stopScheduler() {
     _checkTimer?.cancel();
     _checkTimer = null;
+    _isRunning = false;
+    log('AlarmSchedulerService stopped');
+  }
+
+  // Schedule daily reset of triggered alarms
+  void _scheduleDailyReset() {
+    // Calculate time until next midnight
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final timeUntilMidnight = tomorrow.difference(now);
+    
+    Timer(timeUntilMidnight, () {
+      _triggeredAlarms.clear();
+      log('Cleared triggered alarms for new day');
+      _scheduleDailyReset(); // Schedule next reset
+    });
   }
 
   // Load active alarms from database
@@ -45,8 +70,8 @@ class AlarmSchedulerService {
   void _scheduleNextCheck() {
     _checkTimer?.cancel();
     
-    // Check every minute
-    _checkTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+    // Check every 10 seconds for more precise timing
+    _checkTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _checkAlarms();
     });
   }
@@ -55,12 +80,28 @@ class AlarmSchedulerService {
   void _checkAlarms() {
     final now = DateTime.now();
     final currentDayOfWeek = now.weekday; // 1 = Monday, 7 = Sunday
+    final todayKey = '${now.year}-${now.month}-${now.day}';
+    
+    log('Checking alarms - Current time: ${now.hour}:${now.minute}:${now.second}, Day: $currentDayOfWeek, Active alarms: ${_activeAlarms.length}');
     
     for (final alarm in _activeAlarms) {
+      log('Checking alarm: ${alarm.name} at ${alarm.hour}:${alarm.minute}, Days: ${alarm.selectedDays}');
+      
       // Check if alarm should trigger today
       if (alarm.selectedDays.contains(currentDayOfWeek)) {
-        // Check if it's time for this alarm
-        if (now.hour == alarm.hour && now.minute == alarm.minute) {
+        // Check if it's time for this alarm (within 10 seconds window)
+        final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
+        final timeDifference = now.difference(alarmTime).abs();
+        
+        // Create unique key for this alarm on this day
+        final alarmKey = '${todayKey}-${alarm.hour}-${alarm.minute}';
+        
+        log('Alarm time check - Current: ${now.hour}:${now.minute}:${now.second}, Alarm: ${alarm.hour}:${alarm.minute}, Difference: ${timeDifference.inSeconds}s, Already triggered: ${_triggeredAlarms.contains(alarmKey)}');
+        
+        // Trigger if within 10 seconds of the alarm time and not already triggered
+        if (timeDifference.inSeconds <= 10 && !_triggeredAlarms.contains(alarmKey)) {
+          log('Alarm time check - Current: ${now.hour}:${now.minute}:${now.second}, Alarm: ${alarm.hour}:${alarm.minute}, Difference: ${timeDifference.inSeconds}s');
+          _triggeredAlarms.add(alarmKey);
           _triggerAlarm(alarm);
         }
       }
@@ -69,13 +110,10 @@ class AlarmSchedulerService {
 
   // Trigger an alarm
   void _triggerAlarm(AlarmSettings alarm) {
-    log('Triggering alarm: ${alarm.name} at ${alarm.timeString}');
+    log('Triggering alarm: ${alarm.name} at ${alarm.timeString} with game: ${alarm.gameType}');
     
-    // Schedule the alarm to trigger in 5 seconds (for testing)
-    // In production, this would trigger immediately
-    Timer(const Duration(seconds: 5), () {
-      AlarmMethodChannel.scheduleAlarm();
-    });
+    // Trigger immediately for testing
+    AlarmMethodChannel.scheduleAlarmWithGame(alarm.gameType);
   }
 
   // Refresh alarms (called when alarms are added/removed/modified)
@@ -91,7 +129,12 @@ class AlarmSchedulerService {
     for (final alarm in _activeAlarms) {
       for (final day in alarm.selectedDays) {
         // Calculate next occurrence of this alarm
-        final daysUntilAlarm = (day - now.weekday) % 7;
+        int daysUntilAlarm = day - now.weekday;
+        if (daysUntilAlarm <= 0) {
+          // If today or in the past, move to next week
+          daysUntilAlarm += 7;
+        }
+        
         final nextOccurrence = now.add(Duration(days: daysUntilAlarm));
         final alarmTime = DateTime(
           nextOccurrence.year,
