@@ -30,9 +30,9 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
 
     init {
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        // Use STREAM_MUSIC for higher volume but with USAGE_ALARM attributes
-        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        // Use STREAM_ALARM for reliable alarm sound even with screen off
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
         targetVolume = maxVolume // Always target maximum volume
         Log.d(TAG, "AlarmSoundService initialized - Max: $maxVolume, Original: $originalVolume, Target: $targetVolume")
     }
@@ -64,7 +64,7 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
             @Suppress("DEPRECATION")
             val result = audioManager.requestAudioFocus(
                 null,
-                AudioManager.STREAM_MUSIC,
+                AudioManager.STREAM_ALARM,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
             )
             if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -96,11 +96,11 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
         
         // Define the Runnable that checks and enforces the volume level
         volumeCheckRunnable = Runnable {
-            val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
             Log.d(TAG, "Volume check - Current: $currentVolume, Target: $targetVolume")
             if (currentVolume != targetVolume) {
                 Log.d(TAG, "Volume enforcement: restoring volume to $targetVolume (was: $currentVolume)")
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
             }
             // Schedule the next check after 1000ms
             handler.postDelayed(volumeCheckRunnable!!, 1000)
@@ -120,7 +120,7 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
 
     override fun forceMaxVolume() {
         Log.d(TAG, "Force max volume called")
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
         Log.d(TAG, "Forced volume to maximum: $targetVolume")
     }
 
@@ -134,8 +134,8 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
             Log.d(TAG, "Alarm is now active")
             
             // Save current volume and set to maximum
-            originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+            originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
             Log.d(TAG, "Set volume to maximum: $targetVolume (was: $originalVolume)")
             
             // Request audio focus
@@ -203,7 +203,7 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
             mediaPlayer = null
             
             // Restore original volume
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, originalVolume, 0)
             Log.d(TAG, "Restored volume to original: $originalVolume")
             
             Log.d(TAG, "Alarm sound stopped successfully")

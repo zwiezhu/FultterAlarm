@@ -14,7 +14,9 @@ class AlarmFlutterActivity : FlutterActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("AlarmFlutterActivity", "onCreate called. Intent: ${intent?.extras}")
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+        Log.d("AlarmFlutterActivity", "onCreate called. Intent:  [36m${intent?.extras} [0m")
         
         // Wake up the screen and show on lock screen
         window.addFlags(
@@ -29,20 +31,20 @@ class AlarmFlutterActivity : FlutterActivity() {
         val keyguardManager = getSystemService(KEYGUARD_SERVICE) as android.app.KeyguardManager
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             if (keyguardManager.isKeyguardLocked) {
-                android.util.Log.d("AlarmFlutterActivity", "Screen is locked, attempting to unlock...")
+                Log.d("AlarmFlutterActivity", "Screen is locked, attempting to unlock...")
                 // Try to dismiss keyguard
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
                     keyguardManager.requestDismissKeyguard(this, object : android.app.KeyguardManager.KeyguardDismissCallback() {
                         override fun onDismissSucceeded() {
-                            android.util.Log.d("AlarmFlutterActivity", "Keyguard dismissed successfully")
+                            Log.d("AlarmFlutterActivity", "Keyguard dismissed successfully")
                         }
                         
                         override fun onDismissError() {
-                            android.util.Log.d("AlarmFlutterActivity", "Keyguard dismiss error")
+                            Log.d("AlarmFlutterActivity", "Keyguard dismiss error")
                         }
                         
                         override fun onDismissCancelled() {
-                            android.util.Log.d("AlarmFlutterActivity", "Keyguard dismiss cancelled")
+                            Log.d("AlarmFlutterActivity", "Keyguard dismiss cancelled")
                         }
                     })
                 }

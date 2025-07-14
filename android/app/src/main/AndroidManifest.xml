@@ -81,14 +81,13 @@
         <!-- Declare AlarmFlutterActivity for alarm game -->
         <activity
             android:name=".activity.AlarmFlutterActivity"
+            android:exported="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
-            android:launchMode="singleTop"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:exported="false"
-            android:hardwareAccelerated="true"
-            android:theme="@style/LaunchTheme"
-            android:windowSoftInputMode="adjustResize" />
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <receiver
             android:name=".receiver.AlarmReceiver"

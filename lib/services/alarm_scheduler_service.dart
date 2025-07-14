@@ -72,8 +72,8 @@ class AlarmSchedulerService {
   void _scheduleNextCheck() {
     _checkTimer?.cancel();
     
-    // Check every minute for better battery life
-    _checkTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+    // Check every 10 seconds for better precision
+    _checkTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       _checkAlarms();
     });
   }
@@ -139,8 +139,8 @@ class AlarmSchedulerService {
       for (final day in alarm.selectedDays) {
         // Calculate next occurrence of this alarm
         int daysUntilAlarm = day - now.weekday;
-        if (daysUntilAlarm <= 0) {
-          // If today or in the past, move to next week
+        if (daysUntilAlarm < 0) {
+          // If in the past, move to next week
           daysUntilAlarm += 7;
         }
         
@@ -153,10 +153,19 @@ class AlarmSchedulerService {
           alarm.minute,
         );
         
-        // If alarm time is in the past today, move to next week
-        final finalAlarmTime = alarmTime.isBefore(now) 
-            ? alarmTime.add(const Duration(days: 7))
-            : alarmTime;
+        // If alarm time is in the past today, check if it's today and move to next occurrence
+        DateTime finalAlarmTime;
+        if (alarmTime.isBefore(now)) {
+          if (daysUntilAlarm == 0) {
+            // If it's today but time has passed, move to next occurrence
+            finalAlarmTime = alarmTime.add(const Duration(days: 7));
+          } else {
+            // If it's a future day but time calculation is wrong, skip
+            continue;
+          }
+        } else {
+          finalAlarmTime = alarmTime;
+        }
             
         if (nextAlarm == null || finalAlarmTime.isBefore(nextAlarm)) {
           nextAlarm = finalAlarmTime;
