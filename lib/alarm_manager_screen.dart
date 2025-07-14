@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'hive/models/alarm_settings.dart';
 import 'hive/service/database_service.dart';
 import 'services/alarm_scheduler_service.dart';
+import 'dart:async';
 
 class AlarmManagerScreen extends StatefulWidget {
   const AlarmManagerScreen({super.key});
@@ -19,6 +20,8 @@ class AlarmManagerScreen extends StatefulWidget {
 
 class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
   bool _isRequestingPermission = false;
+  late ValueNotifier<DateTime> _nowNotifier;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -29,12 +32,16 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
     if (!AlarmSchedulerService.instance.isRunning) {
       AlarmSchedulerService.instance.startScheduler();
     }
+    _nowNotifier = ValueNotifier<DateTime>(DateTime.now());
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _nowNotifier.value = DateTime.now();
+    });
   }
 
   @override
   void dispose() {
-    // Don't stop the scheduler when leaving this screen
-    // The scheduler should keep running in the background
+    _timer?.cancel();
+    _nowNotifier.dispose();
     super.dispose();
   }
 
@@ -91,28 +98,39 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
       body: Column(
         children: [
           // Informacja o następnym alarmie
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[900],
-            child: Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  color: Colors.blue,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    AlarmSchedulerService.instance.getNextAlarmString(),
-                    style: TextStyle(
-                      color: Colors.grey[300],
-                      fontSize: 14,
+          ValueListenableBuilder(
+            valueListenable: DatabaseService.instance.alarmSettingsBoxListenable,
+            builder: (context, box, child) {
+              return ValueListenableBuilder<DateTime>(
+                valueListenable: _nowNotifier,
+                builder: (context, now, _) {
+                  AlarmSchedulerService.instance.refreshAlarms();
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    color: Colors.grey[900],
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          color: Colors.blue,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            AlarmSchedulerService.instance.getNextAlarmString(),
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
-            ),
+                  );
+                },
+              );
+            },
           ),
           
           // Lista alarmów

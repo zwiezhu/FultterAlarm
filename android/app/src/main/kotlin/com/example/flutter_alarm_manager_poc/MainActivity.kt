@@ -36,7 +36,7 @@ class MainActivity : FlutterActivity() {
         alarmSoundService = AlarmSoundServiceImpl(this)
         
         // Request battery optimization exemption
-        requestBatteryOptimizationExemption()
+        // requestBatteryOptimizationExemption()
 
         val methodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -136,8 +136,9 @@ class MainActivity : FlutterActivity() {
         val hour = (alarmData["hour"] as? Number)?.toInt() ?: 0
         val minute = (alarmData["minute"] as? Number)?.toInt() ?: 0
         val gameType = alarmData["gameType"] as? String ?: "piano_tiles"
+        val selectedDays = alarmData["selectedDays"] as? List<Int> ?: emptyList()
         
-        Log.d(TAG, "Scheduling native alarm: $name at $hour:$minute with game: $gameType")
+        Log.d(TAG, "Scheduling native alarm: $name at $hour:$minute with game: $gameType, selectedDays: $selectedDays")
         
         val alarmItem = AlarmItem(
             id = id,
@@ -145,37 +146,40 @@ class MainActivity : FlutterActivity() {
             gameType = gameType
         )
         
-        // Calculate delay until alarm time
-        val now = System.currentTimeMillis()
+        val now = java.util.Calendar.getInstance()
         val calendar = java.util.Calendar.getInstance()
         calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
         calendar.set(java.util.Calendar.MINUTE, minute)
         calendar.set(java.util.Calendar.SECOND, 0)
         calendar.set(java.util.Calendar.MILLISECOND, 0)
-        
-        // If alarm time is in the past today, schedule for tomorrow
-        if (calendar.timeInMillis <= now) {
-            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+
+        // Jeśli selectedDays nie jest puste, znajdź najbliższy dzień tygodnia
+        if (selectedDays.isNotEmpty()) {
+            val today = now.get(java.util.Calendar.DAY_OF_WEEK) // 1 = niedziela, 2 = poniedziałek, ...
+            // Zamień na 1=pon, 7=ndz (jak w Dart)
+            val todayDart = if (today == 1) 7 else today - 1
+            var minDaysDiff = 7
+            var targetDay = todayDart
+            for (day in selectedDays) {
+                var daysDiff = (day - todayDart + 7) % 7
+                if (daysDiff == 0 && calendar.timeInMillis <= now.timeInMillis) {
+                    daysDiff = 7 // jeśli dziś, ale godzina już minęła, to za tydzień
+                }
+                if (daysDiff < minDaysDiff) {
+                    minDaysDiff = daysDiff
+                    targetDay = day
+                }
+            }
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, minDaysDiff)
+        } else {
+            // Jeśli alarm na dziś i godzina w przyszłości, nie przesuwaj na jutro
+            if (calendar.timeInMillis <= now.timeInMillis + 1000) {
+                calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+            }
         }
-        
-        val delaySeconds = (calendar.timeInMillis - now) / 1000
-        Log.d(TAG, "Alarm scheduled for ${delaySeconds} seconds from now")
-        
+        val delaySeconds = (calendar.timeInMillis - now.timeInMillis) / 1000
+        Log.d(TAG, "Alarm scheduled for $delaySeconds seconds from now (target: ${calendar.time})")
         alarmScheduler.schedule(alarmItem, delaySeconds.toInt())
     }
     
-    private fun requestBatteryOptimizationExemption() {
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        val packageName = packageName
-        
-        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-            Log.d(TAG, "Requesting battery optimization exemption")
-            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:$packageName")
-            }
-            startActivity(intent)
-        } else {
-            Log.d(TAG, "Battery optimization exemption already granted")
-        }
-    }
 }

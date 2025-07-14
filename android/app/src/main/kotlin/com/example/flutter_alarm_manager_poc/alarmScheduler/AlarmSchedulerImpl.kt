@@ -46,7 +46,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
         
         Log.d(TAG, "Current time: ${System.currentTimeMillis()}, Trigger time: $triggerTime")
 
-        alarmManager.setExact(
+        alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             triggerTime,
             pendingIntent
