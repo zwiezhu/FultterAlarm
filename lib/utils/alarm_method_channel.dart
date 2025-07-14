@@ -27,6 +27,16 @@ class AlarmMethodChannel {
     }
   }
 
+  static Future<void> scheduleNativeAlarm(Map<String, dynamic> alarmData) async {
+    try {
+      log(name: name, 'Scheduling native alarm: ${alarmData['name']} at ${alarmData['hour']}:${alarmData['minute']} with game: ${alarmData['gameType']}');
+      await platform.invokeMethod('scheduleNativeAlarm', alarmData);
+      log(name: name, 'Native alarm scheduled successfully');
+    } on PlatformException catch (e) {
+      log("Failed to schedule native alarm: '${e.message}'.");
+    }
+  }
+
   static Future<void> startAlarmSound() async {
     try {
       log(name: name, 'Starting alarm sound...');

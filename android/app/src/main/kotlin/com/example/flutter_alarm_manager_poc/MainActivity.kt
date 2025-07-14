@@ -1,6 +1,10 @@
 package com.example.flutter_alarm_manager_poc
 
 import android.util.Log
+import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmScheduler
 import com.example.flutter_alarm_manager_poc.alarmScheduler.AlarmSchedulerImpl
 import com.example.flutter_alarm_manager_poc.alarmSoundService.AlarmSoundService
@@ -30,6 +34,9 @@ class MainActivity : FlutterActivity() {
 
         alarmScheduler = AlarmSchedulerImpl(this)
         alarmSoundService = AlarmSoundServiceImpl(this)
+        
+        // Request battery optimization exemption
+        requestBatteryOptimizationExemption()
 
         val methodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -52,6 +59,12 @@ class MainActivity : FlutterActivity() {
                     Log.d(TAG, "Method Channel Invoked, Alarm Scheduling with Game")
                     val gameType = call.argument<String>("gameType") ?: "piano_tiles"
                     scheduleAlarmWithGame(gameType)
+                    result.success(null)
+                }
+                "scheduleNativeAlarm" -> {
+                    Log.d(TAG, "Method Channel Invoked, Native Alarm Scheduling")
+                    val alarmData = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
+                    scheduleNativeAlarm(alarmData)
                     result.success(null)
                 }
                 "alarmAccepted" -> {
@@ -115,5 +128,54 @@ class MainActivity : FlutterActivity() {
             gameType = gameType
         )
         alarmScheduler.schedule(alarmItem, 5) // Schedule for 5 seconds from now
+    }
+
+    private fun scheduleNativeAlarm(alarmData: Map<*, *>) {
+        val id = (alarmData["id"] as? Number)?.toInt() ?: 1
+        val name = alarmData["name"] as? String ?: "Alarm"
+        val hour = (alarmData["hour"] as? Number)?.toInt() ?: 0
+        val minute = (alarmData["minute"] as? Number)?.toInt() ?: 0
+        val gameType = alarmData["gameType"] as? String ?: "piano_tiles"
+        
+        Log.d(TAG, "Scheduling native alarm: $name at $hour:$minute with game: $gameType")
+        
+        val alarmItem = AlarmItem(
+            id = id,
+            message = name,
+            gameType = gameType
+        )
+        
+        // Calculate delay until alarm time
+        val now = System.currentTimeMillis()
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
+        calendar.set(java.util.Calendar.MINUTE, minute)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        
+        // If alarm time is in the past today, schedule for tomorrow
+        if (calendar.timeInMillis <= now) {
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+        
+        val delaySeconds = (calendar.timeInMillis - now) / 1000
+        Log.d(TAG, "Alarm scheduled for ${delaySeconds} seconds from now")
+        
+        alarmScheduler.schedule(alarmItem, delaySeconds.toInt())
+    }
+    
+    private fun requestBatteryOptimizationExemption() {
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        val packageName = packageName
+        
+        if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            Log.d(TAG, "Requesting battery optimization exemption")
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } else {
+            Log.d(TAG, "Battery optimization exemption already granted")
+        }
     }
 }

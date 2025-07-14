@@ -25,7 +25,9 @@ void main() async {
   AlarmMethodChannel.initialize();
   
   // Start the alarm scheduler
+  print('Starting AlarmSchedulerService...');
   AlarmSchedulerService.instance.startScheduler();
+  print('AlarmSchedulerService started');
   
   runApp(const MyApp());
 }

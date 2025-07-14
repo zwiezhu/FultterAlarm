@@ -51,6 +51,7 @@ class AlarmActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("AlarmActivity", "onCreate called. Intent: ${intent?.extras}")
         actionBar?.hide()
         
         // Wake up the screen and show on lock screen
@@ -143,10 +144,16 @@ class AlarmActivity : ComponentActivity() {
                             channel.invokeMethod("navigateToAlarmGame", alarmArgs)
                             
                             // Start AlarmFlutterActivity with game type
-                            val intent = Intent(this, AlarmFlutterActivity::class.java).apply {
+                            val intent = Intent(this@AlarmActivity, AlarmFlutterActivity::class.java).apply {
                                 putExtra("alarmTime", alarmTime)
                                 putExtra("gameType", gameType)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                                       Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                       Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                                       Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                       Intent.FLAG_ACTIVITY_NO_HISTORY or
+                                       Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
+                                       Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
                             }
                             
                             startActivity(intent)

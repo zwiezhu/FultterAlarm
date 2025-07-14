@@ -32,6 +32,9 @@ class AlarmSchedulerService {
     _scheduleDailyReset();
     _isRunning = true;
     log('AlarmSchedulerService started');
+    
+    // Log that we're checking alarms every 10 seconds
+    log('AlarmSchedulerService will check alarms every 10 seconds');
   }
 
   // Stop the alarm scheduler
@@ -62,16 +65,15 @@ class AlarmSchedulerService {
         .getAllAlarmSettings()
         .where((alarm) => alarm.isEnabled)
         .toList();
-    
-    log('Loaded ${_activeAlarms.length} active alarms');
+    log('Loaded  [32m [1m [4m [7m${_activeAlarms.length} [0m active alarms: ${_activeAlarms.map((a) => a.name).toList()}');
   }
 
   // Schedule next check for alarms
   void _scheduleNextCheck() {
     _checkTimer?.cancel();
     
-    // Check every 10 seconds for more precise timing
-    _checkTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    // Check every minute for better battery life
+    _checkTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _checkAlarms();
     });
   }
@@ -98,9 +100,9 @@ class AlarmSchedulerService {
         
         log('Alarm time check - Current: ${now.hour}:${now.minute}:${now.second}, Alarm: ${alarm.hour}:${alarm.minute}, Difference: ${timeDifference.inSeconds}s, Already triggered: ${_triggeredAlarms.contains(alarmKey)}');
         
-        // Trigger if within 10 seconds of the alarm time and not already triggered
-        if (timeDifference.inSeconds <= 10 && !_triggeredAlarms.contains(alarmKey)) {
-          log('Alarm time check - Current: ${now.hour}:${now.minute}:${now.second}, Alarm: ${alarm.hour}:${alarm.minute}, Difference: ${timeDifference.inSeconds}s');
+        // Trigger if within 30 seconds of the alarm time and not already triggered
+        if (timeDifference.inSeconds <= 30 && !_triggeredAlarms.contains(alarmKey)) {
+          log('TRIGGERING ALARM: ${alarm.name} at ${alarm.hour}:${alarm.minute} with game: ${alarm.gameType}');
           _triggeredAlarms.add(alarmKey);
           _triggerAlarm(alarm);
         }
@@ -110,10 +112,17 @@ class AlarmSchedulerService {
 
   // Trigger an alarm
   void _triggerAlarm(AlarmSettings alarm) {
-    log('Triggering alarm: ${alarm.name} at ${alarm.timeString} with game: ${alarm.gameType}');
+    log('Triggering alarm:  [31m [1m${alarm.name} [0m at ${alarm.timeString} with game: ${alarm.gameType}');
     
-    // Trigger immediately for testing
-    AlarmMethodChannel.scheduleAlarmWithGame(alarm.gameType);
+    // Schedule native Android alarm for better reliability
+    AlarmMethodChannel.scheduleNativeAlarm({
+      'id': alarm.id,
+      'name': alarm.name,
+      'hour': alarm.hour,
+      'minute': alarm.minute,
+      'gameType': alarm.gameType,
+      'selectedDays': alarm.selectedDays.toList(),
+    });
   }
 
   // Refresh alarms (called when alarms are added/removed/modified)
