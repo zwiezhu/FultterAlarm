@@ -24,6 +24,12 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
     {'id': 'number_rush', 'name': 'Number Rush', 'description': 'Klikaj liczby w kolejności'},
     {'id': 'sudoku', 'name': 'Sudoku', 'description': 'Rozwiąż łamigłówkę sudoku'},
     {'id': 'ball_runner', 'name': 'Ball Runner', 'description': 'Steruj piłką przez przeszkody'},
+    {'id': 'block_drop', 'name': 'Block Drop', 'description': 'Układaj spadające bloki'},
+    {'id': 'cave_lander', 'name': 'Cave Lander', 'description': 'Ląduj bezpiecznie w jaskini'},
+    {'id': 'icy_tower', 'name': 'Icy Tower', 'description': 'Wspinaj się po lodowej wieży'},
+    {'id': 'sky_tower', 'name': 'Sky Tower', 'description': 'Wspinaj się po wieży na niebie'},
+    {'id': 'wall_bounce', 'name': 'Wall Bounce', 'description': 'Odbijaj się od ścian'},
+    {'id': 'wall_kickers', 'name': 'Wall Kickers', 'description': 'Skacz po ścianach'},
   ];
 
   final List<Map<String, dynamic>> weekDays = [
@@ -104,44 +110,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
             
             const SizedBox(height: 16),
             
-            // Nazwa alarmu
-            Card(
-              color: Colors.grey[800],
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Nazwa Alarmu',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _nameController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'np. Poranny alarm',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        filled: true,
-                        fillColor: Colors.grey[700],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             
-            const SizedBox(height: 16),
             
             // Wybór gry
             Card(
@@ -160,51 +129,27 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[700],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedGame,
-                          isExpanded: true,
-                          dropdownColor: Colors.grey[700],
-                          style: const TextStyle(color: Colors.white),
-                          items: games.map((game) {
-                            return DropdownMenuItem<String>(
-                              value: game['id'],
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    game['name'],
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    game['description'],
-                                    style: TextStyle(
-                                      color: Colors.grey[300],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                selectedGame = value;
-                              });
-                            }
-                          },
-                        ),
+                    SizedBox(
+                      height: 200, // Ograniczenie wysokości, aby lista była przewijalna
+                      child: ListView.builder(
+                        itemCount: games.length,
+                        itemBuilder: (context, index) {
+                          final game = games[index];
+                          final isSelected = selectedGame == game['id'];
+                          return Card(
+                            color: isSelected ? Colors.blue.withOpacity(0.5) : Colors.grey[700],
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: ListTile(
+                              title: Text(game['name'], style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(game['description'], style: TextStyle(color: Colors.grey[300])),
+                              onTap: () {
+                                setState(() {
+                                  selectedGame = game['id'];
+                                });
+                              },
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -389,17 +334,6 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
   }
 
   void _saveAlarmSettings() async {
-    // Sprawdź czy nazwa została podana
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Proszę podać nazwę alarmu'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     // Sprawdź czy wybrano dni
     if (selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -418,7 +352,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
       minute: selectedTime.minute,
       gameType: selectedGame,
       selectedDays: selectedDays.toList(),
-      name: _nameController.text.trim(),
+      name: "Alarm", // Default name
     );
 
     // Zapisz alarm
@@ -442,7 +376,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Alarm "${alarmSettings.name}" został zapisany:\n\n'
+          'Alarm został zapisany:\n\n'
           'Czas: ${alarmSettings.timeString}\n'
           'Gra: ${alarmSettings.gameName}\n'
           'Dni: ${daysNames.join(', ')}',

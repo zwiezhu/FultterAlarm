@@ -7,6 +7,12 @@ import 'memory_match_flutter.dart';
 import 'number_rush_flutter.dart';
 import 'sudoku_game_flutter.dart';
 import 'ball_runner_flutter.dart';
+import 'block_drop_game_flutter.dart';
+import 'cave_lander_flutter.dart';
+import 'icy_tower_flutter.dart';
+import 'sky_tower_game_screen.dart';
+import 'wall_bounce_flutter.dart';
+import 'wall_kickers_flutter.dart';
 import 'game_screen.dart'; // Piano Tiles game
 
 class AlarmGameScreen extends StatefulWidget {
@@ -237,6 +243,21 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
         );
+      case 'block_drop':
+        return BlockDropGame(
+          onScoreChange: (score) => _handleUserInteraction(),
+          gameCompleted: false,
+        );
+      case 'cave_lander':
+        return CaveLanderGameScreen();
+      case 'icy_tower':
+        return IcyTowerGameScreen();
+      case 'sky_tower':
+        return SkyTowerGameScreen();
+      case 'wall_bounce':
+        return WallBounceGame();
+      case 'wall_kickers':
+        return WallKickersGame();
       default:
         // Default to piano tiles game
         return GameScreen(
