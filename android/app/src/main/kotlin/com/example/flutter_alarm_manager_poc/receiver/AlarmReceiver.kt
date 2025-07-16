@@ -31,23 +31,27 @@ class AlarmReceiver : BroadcastReceiver() {
         
         Log.d(TAG, "Alarm triggered - ID: $alarmId, Message: $message, Game: $gameType, Time: $alarmTime")
         
-        // Always show the AlarmActivity regardless of app state
-        val alarmIntent = Intent(context, AlarmActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+        val fullScreenIntent = Intent(context, AlarmActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("ALARM_ID", alarmId)
             putExtra("ALARM_MESSAGE", message)
             putExtra("ALARM_GAME_TYPE", gameType)
             putExtra("ALARM_TIME", alarmTime)
         }
-        
-        Log.d(TAG, "Starting AlarmActivity...")
-        context.startActivity(alarmIntent)
-        Log.d(TAG, "AlarmActivity started")
-        
-        // Also show notification for persistent alarm handling
-        Log.d(TAG, "Showing notification...")
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context,
+            alarmId,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notificationService: AlarmNotificationService = AlarmNotificationServiceImpl(context)
-        notificationService.showNotification(AlarmItem(alarmId, message), alarmTime)
-        Log.d(TAG, "Notification shown")
+        notificationService.showNotification(
+            alarmItem = AlarmItem(alarmId, message),
+            alarmTime = alarmTime,
+            fullScreenPendingIntent = fullScreenPendingIntent
+        )
+        Log.d(TAG, "Notification with full-screen intent shown")
     }
 }

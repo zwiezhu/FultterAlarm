@@ -24,13 +24,14 @@ class AlarmSettingsAdapter extends TypeAdapter<AlarmSettings> {
       selectedDays: (fields[4] as List).cast<int>(),
       isEnabled: fields[5] as bool,
       name: fields[6] as String,
+      durationMinutes: fields[7] as int? ?? 1,
     );
   }
 
   @override
   void write(BinaryWriter writer, AlarmSettings obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class AlarmSettingsAdapter extends TypeAdapter<AlarmSettings> {
       ..writeByte(5)
       ..write(obj.isEnabled)
       ..writeByte(6)
-      ..write(obj.name);
+      ..write(obj.name)
+      ..writeByte(7)
+      ..write(obj.durationMinutes);
   }
 
   @override

@@ -18,11 +18,13 @@ import 'game_screen.dart'; // Piano Tiles game
 class AlarmGameScreen extends StatefulWidget {
   final DateTime alarmTime;
   final String gameType;
+  final int durationMinutes;
   
   const AlarmGameScreen({
     super.key,
     required this.alarmTime,
     required this.gameType,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -35,6 +37,7 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   int remainingSeconds = 60; // 1 minute countdown
   int inactivityTimer = 15; // 15 seconds inactivity timer
   bool showCompletionDialog = false;
+  int durationMinutes = 1;
 
   // Timers
   Timer? _alarmTimer;
@@ -44,8 +47,22 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   @override
   void initState() {
     super.initState();
+    // Nie używaj context tutaj!
+    // Pozostała inicjalizacja
     print('AlarmGameScreen: initState called');
     _startAlarmSystem();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pobierz durationMinutes z argumentów, jeśli dostępne
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args['durationMinutes'] != null) {
+      durationMinutes = args['durationMinutes'] as int;
+      remainingSeconds = durationMinutes * 60;
+      print('AlarmGameScreen: didChangeDependencies called, durationMinutes: $durationMinutes');
+    }
   }
 
   void _startAlarm() async {

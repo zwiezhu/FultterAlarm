@@ -25,6 +25,9 @@ class AlarmSettings extends HiveObject {
   @HiveField(6)
   final String name;
 
+  @HiveField(7)
+  final int durationMinutes;
+
   AlarmSettings({
     required this.id,
     required this.hour,
@@ -33,6 +36,7 @@ class AlarmSettings extends HiveObject {
     required this.selectedDays,
     this.isEnabled = true,
     required this.name,
+    this.durationMinutes = 1,
   });
 
   // Helper method to get time as string
@@ -82,6 +86,7 @@ class AlarmSettings extends HiveObject {
     List<int>? selectedDays,
     bool? isEnabled,
     String? name,
+    int? durationMinutes,
   }) {
     return AlarmSettings(
       id: id ?? this.id,
@@ -91,6 +96,7 @@ class AlarmSettings extends HiveObject {
       selectedDays: selectedDays ?? this.selectedDays,
       isEnabled: isEnabled ?? this.isEnabled,
       name: name ?? this.name,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 } 

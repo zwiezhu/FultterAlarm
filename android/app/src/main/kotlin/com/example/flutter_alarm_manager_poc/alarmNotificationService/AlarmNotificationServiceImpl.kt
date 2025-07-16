@@ -47,21 +47,7 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
         }
     }
 
-    override fun showNotification(alarmItem: AlarmItem, alarmTime: Long) {
-        val fullScreenIntent = Intent(context, AlarmActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
-            putExtra("ALARM_ID", alarmItem.id)
-            putExtra("ALARM_MESSAGE", alarmItem.message)
-            putExtra("ALARM_TIME", alarmTime)
-        }
-
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            context,
-            alarmItem.id,
-            fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+    override fun showNotification(alarmItem: AlarmItem, alarmTime: Long, fullScreenPendingIntent: PendingIntent) {
         val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
 
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)

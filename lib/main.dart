@@ -108,7 +108,11 @@ class MyApp extends StatelessWidget {
               gameType = 'piano_tiles';
             }
             
-            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType);
+            int durationMinutes = 1;
+            if (args != null && args['durationMinutes'] != null) {
+              durationMinutes = args['durationMinutes'] as int;
+            }
+            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType, durationMinutes: durationMinutes);
           },
           '/game': (context) => const GameScreen(), // Piano Tiles game
           '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game

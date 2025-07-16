@@ -15,6 +15,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
   TimeOfDay selectedTime = const TimeOfDay(hour: 7, minute: 0);
   String selectedGame = 'piano_tiles';
   Set<int> selectedDays = {1, 2, 3, 4, 5}; // Domyślnie dni robocze (pon-pt)
+  int durationMinutes = 1;
   final TextEditingController _nameController = TextEditingController();
   
   final List<Map<String, dynamic>> games = [
@@ -151,6 +152,65 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
                           );
                         },
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Wybór czasu gry
+            Card(
+              color: Colors.grey[800],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Czas gry do wyłączenia alarmu',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 80,
+                      child: ListWheelScrollView.useDelegate(
+                        itemExtent: 40,
+                        diameterRatio: 2.5,
+                        perspective: 0.003,
+                        physics: FixedExtentScrollPhysics(),
+                        onSelectedItemChanged: (index) {
+                          setState(() {
+                            durationMinutes = index + 1;
+                          });
+                        },
+                        childDelegate: ListWheelChildBuilderDelegate(
+                          builder: (context, index) {
+                            if (index < 0 || index > 19) return null;
+                            return Container(
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${index + 1} min',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  color: durationMinutes == index + 1 ? Colors.blue : Colors.white,
+                                  fontWeight: durationMinutes == index + 1 ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Wybrano: $durationMinutes min',
+                      style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
@@ -353,6 +413,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
       gameType: selectedGame,
       selectedDays: selectedDays.toList(),
       name: "Alarm", // Default name
+      durationMinutes: durationMinutes,
     );
 
     // Zapisz alarm
