@@ -65,7 +65,19 @@ class AlarmSchedulerService {
         .getAllAlarmSettings()
         .where((alarm) => alarm.isEnabled)
         .toList();
-    log('Loaded  [32m [1m [4m [7m${_activeAlarms.length} [0m active alarms: ${_activeAlarms.map((a) => a.name).toList()}');
+    log('Loaded ${_activeAlarms.length} active alarms: ${_activeAlarms.map((a) => a.name).toList()}');
+
+    // Schedule each active alarm using the native AlarmManager
+    for (final alarm in _activeAlarms) {
+      AlarmMethodChannel.scheduleNativeAlarm({
+        'id': alarm.id,
+        'name': alarm.name,
+        'hour': alarm.hour,
+        'minute': alarm.minute,
+        'gameType': alarm.gameType,
+        'selectedDays': alarm.selectedDays.toList(),
+      });
+    }
   }
 
   // Schedule next check for alarms
