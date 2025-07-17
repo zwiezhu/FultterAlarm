@@ -16,9 +16,14 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
     override fun schedule(alarmItem: AlarmItem, delaySeconds: Int) {
         Log.d(TAG, "Scheduling alarm - ID: ${alarmItem.id}, Message: ${alarmItem.message}, Delay: ${delaySeconds}s")
         
+        // Check for exact alarm permissions (Android 12+)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
                 Log.e(TAG, "Cannot schedule exact alarms. Missing permission.")
+                // Request permission to schedule exact alarms
+                val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
                 return
             }
             Log.d(TAG, "Can schedule exact alarms: true")
@@ -46,13 +51,12 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
         
         Log.d(TAG, "Current time: ${System.currentTimeMillis()}, Trigger time: $triggerTime")
 
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            pendingIntent
-        )
+        // Use setAlarmClock instead of setExactAndAllowWhileIdle for better reliability
+        // setAlarmClock is treated as a real alarm clock by the system and works even in Doze mode
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
+        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         
-        Log.d(TAG, "Alarm scheduled successfully for ${delaySeconds} seconds from now")
+        Log.d(TAG, "Alarm scheduled successfully for ${delaySeconds} seconds from now using setAlarmClock")
     }
 
     override fun cancel(alarmItem: AlarmItem) {

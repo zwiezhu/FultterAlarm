@@ -59,7 +59,15 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
       if (!mounted) return;
 
       if (status.isGranted) {
-        await AlarmMethodChannel.scheduleAlarm();
+        final now = DateTime.now().add(const Duration(seconds: 10));
+        AlarmMethodChannel.scheduleNativeAlarm({
+          'id': 999, // Test ID
+          'name': 'Test Alarm',
+          'hour': now.hour,
+          'minute': now.minute,
+          'gameType': 'piano_tiles', // Default game for test
+          'selectedDays': [],
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
