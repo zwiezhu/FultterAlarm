@@ -23,6 +23,14 @@ class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         Log.d(TAG, "AlarmReceiver.onReceive called")
+        if (intent?.action == "com.example.flutter_alarm_manager_poc.ALARM_TRIGGERED") {
+            Log.d(TAG, "AlarmReceiver triggered by android_alarm_manager_plus impulse")
+            // Tutaj uruchom całą logikę alarmu jak przy normalnym alarmie
+            val alarmIntent = Intent(context, com.example.flutter_alarm_manager_poc.activity.AlarmActivity::class.java)
+            alarmIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(alarmIntent)
+            return
+        }
         
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val message = intent?.getStringExtra("ALARM_MESSAGE") ?: "Alarm!"

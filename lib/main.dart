@@ -21,11 +21,24 @@ import 'utils/alarm_method_channel.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:flutter/services.dart';
+
+const MethodChannel _alarmChannel = MethodChannel('com.example.flutter_alarm_manager_poc/alarm');
+
+void alarmCallback() async {
+  try {
+    await _alarmChannel.invokeMethod('alarm_triggered');
+  } catch (e) {
+    print("Error invoking alarm_triggered: $e");
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseService.instance.initializeHive();
   AlarmMethodChannel.initialize();
+  await AndroidAlarmManager.initialize();
   
   // Start the alarm scheduler
   print('Starting AlarmSchedulerService...');
@@ -33,6 +46,17 @@ void main() async {
   print('AlarmSchedulerService started');
   
   runApp(const MyApp());
+}
+
+Future<void> scheduleAlarm(DateTime alarmTime, int alarmId) async {
+  await AndroidAlarmManager.oneShotAt(
+    alarmTime,
+    alarmId,
+    alarmCallback,
+    exact: true,
+    wakeup: true,
+    rescheduleOnReboot: true,
+  );
 }
 
 class MyApp extends StatefulWidget {

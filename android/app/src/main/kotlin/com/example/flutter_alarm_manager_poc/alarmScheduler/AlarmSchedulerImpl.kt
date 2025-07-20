@@ -39,24 +39,33 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             context,
             alarmItem.id,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
         Log.d(TAG, "PendingIntent created: $pendingIntent")
-
-        val triggerTime = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            add(Calendar.SECOND, delaySeconds)  // Set alarm in delaySeconds seconds
-        }.timeInMillis
+        val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000L)
         
-        Log.d(TAG, "Current time: ${System.currentTimeMillis()}, Trigger time: $triggerTime")
-
-        // Use setAlarmClock instead of setExactAndAllowWhileIdle for better reliability
-        // setAlarmClock is treated as a real alarm clock by the system and works even in Doze mode
+        Log.d(TAG, "Current time: ${System.currentTimeMillis()}, Trigger time: $triggerTime, Delay: ${delaySeconds}s")
+        
+        // Cancel any existing alarm with the same ID first
+        alarmManager.cancel(pendingIntent)
+        
+        // Use setAlarmClock for maximum reliability - it bypasses Doze mode and battery optimizations
         val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
         alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         
         Log.d(TAG, "Alarm scheduled successfully for ${delaySeconds} seconds from now using setAlarmClock")
+        
+        // Store alarm info in SharedPreferences for persistence across reboots
+        val prefs = context.getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putLong("alarm_${alarmItem.id}_time", triggerTime)
+            putString("alarm_${alarmItem.id}_message", alarmItem.message)
+            putString("alarm_${alarmItem.id}_game", alarmItem.gameType)
+            putBoolean("alarm_${alarmItem.id}_active", true)
+            apply()
+        }
+        Log.d(TAG, "Alarm info stored in SharedPreferences")
     }
 
     override fun cancel(alarmItem: AlarmItem) {
@@ -69,12 +78,24 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             intent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-        pendingIntent?.let {
-            alarmManager.cancel(it)
-            it.cancel()
+        
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
             Log.d(TAG, "Alarm cancelled successfully")
-        } ?: run {
+        } else {
             Log.w(TAG, "No pending intent found to cancel")
         }
+        
+        // Remove from SharedPreferences
+        val prefs = context.getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            remove("alarm_${alarmItem.id}_time")
+            remove("alarm_${alarmItem.id}_message")
+            remove("alarm_${alarmItem.id}_game")
+            remove("alarm_${alarmItem.id}_active")
+            apply()
+        }
+        Log.d(TAG, "Alarm info removed from SharedPreferences")
     }
 }
