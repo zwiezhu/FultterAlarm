@@ -47,24 +47,17 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   @override
   void initState() {
     super.initState();
-    // Nie używaj context tutaj!
-    // Pozostała inicjalizacja
-    print('AlarmGameScreen: initState called');
+    durationMinutes = widget.durationMinutes;
+    remainingSeconds = durationMinutes * 60;
+    print("AlarmGameScreen: initState called, durationMinutes: $durationMinutes");
     _startAlarmSystem();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Pobierz durationMinutes z argumentów, jeśli dostępne
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args['durationMinutes'] != null) {
-      durationMinutes = args['durationMinutes'] as int;
-      remainingSeconds = durationMinutes * 60;
-      print('AlarmGameScreen: didChangeDependencies called, durationMinutes: $durationMinutes');
-    }
+    // No additional initialization required here
   }
-
   void _startAlarm() async {
     print('AlarmGameScreen: _startAlarm called');
     
