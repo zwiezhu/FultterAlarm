@@ -138,13 +138,11 @@ class _MyAppState extends State<MyApp> {
               if (uri.path == '/alarm_game') {
                 final alarmTimeParam = uri.queryParameters['alarmTime'];
                 final gameTypeParam = uri.queryParameters['gameType'];
-                final durationParam = uri.queryParameters['durationMinutes'];
-
+                
                 if (alarmTimeParam != null && gameTypeParam != null) {
                   args = {
                     'alarmTime': int.tryParse(alarmTimeParam) ?? DateTime.now().millisecondsSinceEpoch,
                     'gameType': gameTypeParam,
-                    'durationMinutes': int.tryParse(durationParam ?? '1') ?? 1,
                   };
                 }
               }

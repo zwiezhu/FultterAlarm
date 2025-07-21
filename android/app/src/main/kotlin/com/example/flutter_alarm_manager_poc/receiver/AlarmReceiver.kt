@@ -35,7 +35,6 @@ class AlarmReceiver : BroadcastReceiver() {
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val message = intent?.getStringExtra("ALARM_MESSAGE") ?: "Alarm!"
         val gameType = intent?.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
-        val durationMinutes = intent?.getIntExtra("ALARM_DURATION_MINUTES", 1) ?: 1
         val alarmTime = System.currentTimeMillis()
         
         Log.d(TAG, "Alarm triggered - ID: $alarmId, Message: $message, Game: $gameType, Time: $alarmTime")
@@ -45,7 +44,6 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("ALARM_ID", alarmId)
             putExtra("ALARM_MESSAGE", message)
             putExtra("ALARM_GAME_TYPE", gameType)
-            putExtra("ALARM_DURATION_MINUTES", durationMinutes)
             putExtra("ALARM_TIME", alarmTime)
         }
 
@@ -58,7 +56,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val notificationService: AlarmNotificationService = AlarmNotificationServiceImpl(context)
         notificationService.showNotification(
-            alarmItem = AlarmItem(alarmId, message, gameType, durationMinutes),
+            alarmItem = AlarmItem(alarmId, message),
             alarmTime = alarmTime,
             fullScreenPendingIntent = fullScreenPendingIntent
         )

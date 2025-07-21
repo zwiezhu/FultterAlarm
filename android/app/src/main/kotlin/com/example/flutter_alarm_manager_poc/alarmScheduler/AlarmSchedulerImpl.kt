@@ -33,7 +33,6 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putExtra("ALARM_ID", alarmItem.id)
             putExtra("ALARM_MESSAGE", alarmItem.message)
             putExtra("ALARM_GAME_TYPE", alarmItem.gameType)
-            putExtra("ALARM_DURATION_MINUTES", alarmItem.durationMinutes)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -63,7 +62,6 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putLong("alarm_${alarmItem.id}_time", triggerTime)
             putString("alarm_${alarmItem.id}_message", alarmItem.message)
             putString("alarm_${alarmItem.id}_game", alarmItem.gameType)
-            putInt("alarm_${alarmItem.id}_duration", alarmItem.durationMinutes)
             putBoolean("alarm_${alarmItem.id}_active", true)
             apply()
         }
@@ -95,7 +93,6 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             remove("alarm_${alarmItem.id}_time")
             remove("alarm_${alarmItem.id}_message")
             remove("alarm_${alarmItem.id}_game")
-            remove("alarm_${alarmItem.id}_duration")
             remove("alarm_${alarmItem.id}_active")
             apply()
         }
