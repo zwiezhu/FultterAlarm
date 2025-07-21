@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'hive/models/alarm_settings.dart';
 import 'hive/service/database_service.dart';
 import 'services/alarm_scheduler_service.dart';
-import 'utils/alarm_method_channel.dart';
 
 class AlarmSettingsScreen extends StatefulWidget {
   const AlarmSettingsScreen({super.key});
@@ -419,16 +418,6 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
 
     // Zapisz alarm
     await DatabaseService.instance.saveAlarmSettings(alarmSettings);
-
-    // Schedule the native alarm immediately for the next occurrence
-    AlarmMethodChannel.scheduleNativeAlarm({
-      'id': alarmSettings.id,
-      'name': alarmSettings.name,
-      'hour': alarmSettings.hour,
-      'minute': alarmSettings.minute,
-      'gameType': alarmSettings.gameType,
-      'selectedDays': alarmSettings.selectedDays,
-    });
     
     // Odśwież scheduler
     AlarmSchedulerService.instance.refreshAlarms();
