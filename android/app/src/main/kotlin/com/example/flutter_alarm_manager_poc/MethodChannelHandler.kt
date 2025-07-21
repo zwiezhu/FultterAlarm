@@ -37,6 +37,7 @@ class MethodChannelHandler(private val context: Context) {
                 val intent = Intent(context, AlarmFlutterActivity::class.java).apply {
                     putExtra("alarmTime", System.currentTimeMillis())
                     putExtra("gameType", "piano_tiles") // This can be made dynamic
+                    putExtra("durationMinutes", 1)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 }
                 context.startActivity(intent)
@@ -54,13 +55,15 @@ class MethodChannelHandler(private val context: Context) {
         val minute = (alarmData["minute"] as? Number)?.toInt() ?: 0
         val gameType = alarmData["gameType"] as? String ?: "piano_tiles"
         val selectedDays = alarmData["selectedDays"] as? List<Int> ?: emptyList()
+        val durationMinutes = (alarmData["durationMinutes"] as? Number)?.toInt() ?: 1
 
         Log.d(TAG, "Scheduling native alarm: $name at $hour:$minute with game: $gameType, selectedDays: $selectedDays")
 
         val alarmItem = AlarmItem(
             id = id,
             message = name,
-            gameType = gameType
+            gameType = gameType,
+            durationMinutes = durationMinutes
         )
 
         val now = java.util.Calendar.getInstance()

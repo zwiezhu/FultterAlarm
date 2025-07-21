@@ -74,6 +74,7 @@ class AlarmActivity : ComponentActivity() {
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val alarmTime = intent.getLongExtra("ALARM_TIME", System.currentTimeMillis())
         val gameType = intent.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
+        val durationMinutes = intent.getIntExtra("ALARM_DURATION_MINUTES", 1)
 
         // Initialize volume control
         initializeVolumeControl()
@@ -139,7 +140,8 @@ class AlarmActivity : ComponentActivity() {
                             // Pass alarm time and gameType through method channel and navigate
                             val alarmArgs = mapOf(
                                 "alarmTime" to alarmTime,
-                                "gameType" to gameType
+                                "gameType" to gameType,
+                                "durationMinutes" to durationMinutes
                             )
                             channel.invokeMethod("navigateToAlarmGame", alarmArgs)
                             
@@ -147,7 +149,8 @@ class AlarmActivity : ComponentActivity() {
                             val intent = Intent(this@AlarmActivity, AlarmFlutterActivity::class.java).apply {
                                 putExtra("alarmTime", alarmTime)
                                 putExtra("gameType", gameType)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                                putExtra("durationMinutes", durationMinutes)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
                                        Intent.FLAG_ACTIVITY_NO_ANIMATION or
                                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
