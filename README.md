@@ -216,6 +216,29 @@ class AlarmReceiver : BroadcastReceiver() {
 - **Flutter-Android Communication**: The **Method Channel** serves as the bridge for communication between the Flutter and native Android sides, ensuring seamless action handling and data transmission.
 - **State Handling**: The system handles alarms gracefully, whether the app is in a running state or was previously killed, ensuring that alarms work in all scenarios.
 
+### Alarm Flow Pseudocode
+
+```text
+procedure scheduleAlarm(time, message)
+    // Called from Flutter UI
+    send schedule request to Android via MethodChannel
+    AlarmScheduler.schedule(time, message)
+
+on alarmTriggered
+    AlarmReceiver receives broadcast
+    AlarmNotificationService.showNotification(message)
+    launch AlarmActivity for user action
+
+on userAction(action)
+    AlarmNotificationService.cancelNotification()
+    if action is ACCEPT
+        MethodChannel.invoke('alarmAccepted')
+    else if action is SNOOZE
+        AlarmScheduler.schedule(newTime, message)
+        MethodChannel.invoke('alarmSnoozed')
+    store action result in Hive database
+```
+
 ---
 
 ## Permissions
