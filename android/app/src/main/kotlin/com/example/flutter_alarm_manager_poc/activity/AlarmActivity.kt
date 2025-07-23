@@ -28,6 +28,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
+import androidx.compose.ui.graphics.Color
 
 
 class AlarmActivity : ComponentActivity() {
@@ -127,7 +128,7 @@ class AlarmActivity : ComponentActivity() {
         // Set the content of the AlarmActivity using Jetpack Compose
         setContent {
             MaterialTheme {
-                Surface(color = MaterialTheme.colorScheme.onSurface) {
+                Surface(color = Color(0xFFFF69B4)) {
                     AlarmScreen(
                         onPlay = {
                             Log.d(TAG, "Play button clicked")

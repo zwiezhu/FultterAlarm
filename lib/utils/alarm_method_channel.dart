@@ -7,16 +7,6 @@ class AlarmMethodChannel {
   static const name = "Flutter";
   static const platform = MethodChannel('com.example/alarm_manager');
 
-  static Future<void> scheduleAlarm() async {
-    try {
-      log(name: name, 'Scheduling alarm...');
-      await platform.invokeMethod('scheduleAlarm');
-      log(name: name, 'Alarm scheduled successfully');
-    } on PlatformException catch (e) {
-      log("Failed to schedule alarm: '${e.message}'.");
-    }
-  }
-
   static Future<void> scheduleAlarmWithGame(String gameType) async {
     try {
       log(name: name, 'Scheduling alarm with game: $gameType');

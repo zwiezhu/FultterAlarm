@@ -21,8 +21,6 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
 
     <queries>
@@ -35,7 +33,7 @@
 
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="flutter_alarm_manager_poc">
+        android:label="flutterAlarmNowszy">
         <activity
             android:name=".activity.AlarmActivity"
             android:showWhenLocked="true"
