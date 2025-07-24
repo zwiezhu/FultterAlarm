@@ -49,6 +49,7 @@ class SudokuGame extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
 
   const SudokuGame({
     super.key,
@@ -58,6 +59,7 @@ class SudokuGame extends StatefulWidget {
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -80,6 +82,7 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
   bool isPaused = false;
   bool gameOver = false;
   List<WrongMark> wrongMarks = [];
+  Timer? _durationTimer;
 
   final Random _random = Random();
 
@@ -87,6 +90,7 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _resetGame();
+    _startDurationTimer();
   }
 
   List<T> _shuffle<T>(List<T> list) {
@@ -306,8 +310,18 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
     return count;
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _durationTimer?.cancel();
     for (final mark in wrongMarks) {
       mark.controller.dispose();
     }
@@ -349,13 +363,19 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
                 ),
                 Column(
                   children: [
-                    Text(
-                      'Filled: $_filledCells/81',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
+                    if (widget.remainingTime != null)
+                      Text(
+                        'Time: ${widget.remainingTime}s',
+                        style: const TextStyle(fontSize: 12, color: Colors.orange),
                       ),
-                    ),
+                    if (widget.inactivityTime != null)
+                      Text(
+                        'Inactive: ${widget.inactivityTime}s',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.inactivityTime! <= 5 ? Colors.red : Colors.grey,
+                        ),
+                      ),
                   ],
                 ),
                 IconButton(

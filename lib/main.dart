@@ -110,80 +110,29 @@ class _MyAppState extends State<MyApp> {
         initialRoute: window.defaultRouteName,
         routes: {
           '/': (context) => const AlarmManagerScreen(),
-          '/alarm_screen': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-            final alarmTime = args['alarmTime'] as DateTime;
-            return AlarmScreen(
-              onPlay: () {
-                AlarmMethodChannel.platform.invokeMethod('showGameScreen');
-              },
-              onSnooze: () {
-                // This will be handled by the platform channel
-              },
-              alarmTime: alarmTime,
+          '/alarm_screen': (context) => AlarmScreen(
+            onPlay: () {},
+            onSnooze: () {},
+            alarmTime: DateTime.now(),
+          ),
+          // Dodaj inne trasy jeśli są potrzebne
+        },
+        onGenerateRoute: (settings) {
+          final uri = Uri.parse(settings.name ?? '');
+          if (uri.path == '/alarm_game') {
+            final gameType = uri.queryParameters['gameType'] ?? 'piano_tiles';
+            final duration = int.tryParse(uri.queryParameters['duration'] ?? '1') ?? 1;
+            return MaterialPageRoute(
+              builder: (context) => AlarmGameScreen(
+                alarmTime: DateTime.now(),
+                gameType: gameType,
+                durationMinutes: duration,
+              ),
+              settings: settings,
             );
-          },
-          '/alarm_game': (context) {
-            // Try to get arguments from route, fallback to method channel
-            Map<String, dynamic>? args;
-            try {
-              args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-            } catch (e) {
-              // Arguments not available, try method channel
-            }
-            
-            // If no arguments from route, try to parse from URL parameters
-            if (args == null) {
-              final uri = Uri.parse(window.defaultRouteName);
-              if (uri.path == '/alarm_game') {
-                final alarmTimeParam = uri.queryParameters['alarmTime'];
-                final gameTypeParam = uri.queryParameters['gameType'];
-                
-                if (alarmTimeParam != null && gameTypeParam != null) {
-                  args = {
-                    'alarmTime': int.tryParse(alarmTimeParam) ?? DateTime.now().millisecondsSinceEpoch,
-                    'gameType': gameTypeParam,
-                  };
-                }
-              }
-            }
-            
-            args ??= AlarmMethodChannel.getPendingAlarmArgs();
-            
-            DateTime alarmTime;
-            String gameType;
-            if (args != null) {
-              if (args['alarmTime'] is DateTime) {
-                alarmTime = args['alarmTime'] as DateTime;
-              } else if (args['alarmTime'] is int) {
-                alarmTime = DateTime.fromMillisecondsSinceEpoch(args['alarmTime'] as int);
-              } else {
-                alarmTime = DateTime.now();
-              }
-              gameType = args['gameType'] as String? ?? 'piano_tiles';
-            } else {
-              alarmTime = DateTime.now();
-              gameType = 'piano_tiles';
-            }
-            
-            int durationMinutes = 1;
-            if (args != null && args['durationMinutes'] != null) {
-              durationMinutes = args['durationMinutes'] as int;
-            }
-            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType, durationMinutes: durationMinutes);
-          },
-          '/game': (context) => const GameScreen(), // Piano Tiles game
-          '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game
-          '/wall_bounce_game': (context) => const WallBounceGame(), // Wall Bounce game
-          '/icy_tower_game': (context) => const IcyTowerGameScreen(), // Icy Tower game
-          '/cave_lander_game': (context) => const CaveLanderGameScreen(), // Cave Lander game
-          '/wall_kickers_game': (context) => const WallKickersGame(), // Wall Kickers game
-          '/ball_runner_game': (context) => BallRunnerGame(onScoreChange: (score) {}), // Ball Runner game
-          '/swipe_tiles_game': (context) => const SwipeTilesGameScreen(), // Swipe Tiles game
-          '/memory_match_game': (context) => const MemoryMatchGameScreen(), // Memory Match game
-          '/number_rush_game': (context) => const NumberRushGameScreen(), // Number Rush game
-          '/sudoku_game': (context) => SudokuGame(onScoreChange: (score) {}, gameCompleted: false), // Sudoku Game
-          '/block_drop_game': (context) => BlockDropGame(onScoreChange: (score) {}, gameCompleted: false), // Block Drop Game
-        });
+          }
+          return null;
+        },
+      );
   }
 }

@@ -13,8 +13,8 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
     private val TAG = "AlarmSchedulerImpl"
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    override fun schedule(alarmItem: AlarmItem, delaySeconds: Int) {
-        Log.d(TAG, "Scheduling alarm - ID: ${alarmItem.id}, Message: ${alarmItem.message}, Delay: ${delaySeconds}s")
+    override fun schedule(alarmItem: AlarmItem, delaySeconds: Int, durationMinutes: Int) {
+        Log.d(TAG, "Scheduling alarm - ID: ${alarmItem.id}, Message: ${alarmItem.message}, Delay: ${delaySeconds}s, Duration: ${durationMinutes}m")
         
         // Check for exact alarm permissions (Android 12+)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
@@ -33,6 +33,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putExtra("ALARM_ID", alarmItem.id)
             putExtra("ALARM_MESSAGE", alarmItem.message)
             putExtra("ALARM_GAME_TYPE", alarmItem.gameType)
+            putExtra("ALARM_DURATION", durationMinutes)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

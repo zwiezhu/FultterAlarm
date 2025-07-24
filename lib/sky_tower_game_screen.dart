@@ -14,7 +14,8 @@ class Block {
 }
 
 class SkyTowerGameScreen extends StatefulWidget {
-  const SkyTowerGameScreen({super.key});
+  final int durationMinutes;
+  const SkyTowerGameScreen({super.key, this.durationMinutes = 1});
 
   @override
   State<SkyTowerGameScreen> createState() => _SkyTowerGameScreenState();
@@ -46,13 +47,22 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   double cameraY = 0;
 
   Timer? _gameLoopTimer;
-
-  
+  Timer? _durationTimer;
 
   @override
   void initState() {
     super.initState();
     // Game will be reset and started when build method is called for the first time
+    _startDurationTimer();
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
   }
 
   void resetGame() {
@@ -148,6 +158,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   @override
   void dispose() {
     _gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 

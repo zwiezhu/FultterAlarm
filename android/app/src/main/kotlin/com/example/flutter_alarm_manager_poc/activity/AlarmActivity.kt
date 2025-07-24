@@ -74,6 +74,7 @@ class AlarmActivity : ComponentActivity() {
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val alarmTime = intent.getLongExtra("ALARM_TIME", System.currentTimeMillis())
         val gameType = intent.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
+        val duration = intent.getIntExtra("ALARM_DURATION", 1)
 
         // Initialize volume control
         initializeVolumeControl()
@@ -147,6 +148,7 @@ class AlarmActivity : ComponentActivity() {
                             val intent = Intent(this@AlarmActivity, AlarmFlutterActivity::class.java).apply {
                                 putExtra("alarmTime", alarmTime)
                                 putExtra("gameType", gameType)
+                                putExtra("duration", duration)
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
                                        Intent.FLAG_ACTIVITY_NO_ANIMATION or

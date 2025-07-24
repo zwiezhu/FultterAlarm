@@ -77,7 +77,8 @@ class GameSettings {
 }
 
 class WallKickersGame extends StatefulWidget {
-  const WallKickersGame({super.key});
+  final int durationMinutes;
+  const WallKickersGame({super.key, this.durationMinutes = 1});
 
   @override
   State<WallKickersGame> createState() => _WallKickersGameState();
@@ -107,6 +108,7 @@ class _WallKickersGameState extends State<WallKickersGame> with TickerProviderSt
   // Animation and input
   late AnimationController _animationController;
   Timer? _gameLoopTimer;
+  Timer? _durationTimer;
   
   // Touch handling
   Offset? _panStart;
@@ -122,12 +124,23 @@ class _WallKickersGameState extends State<WallKickersGame> with TickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 16),
     );
+    _startDurationTimer();
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     _gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 

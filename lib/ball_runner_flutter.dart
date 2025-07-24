@@ -27,6 +27,7 @@ class BallRunnerGame extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
 
   const BallRunnerGame({
     Key? key,
@@ -36,6 +37,7 @@ class BallRunnerGame extends StatefulWidget {
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   }) : super(key: key);
 
   @override
@@ -76,6 +78,7 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
   // Timers
   Timer? _gameLoopTimer;
   Timer? _obstacleTimer;
+  Timer? _durationTimer;
 
   double gameWidth = 0;
   double gameHeight = 0;
@@ -85,6 +88,7 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeGame();
+      _startDurationTimer();
     });
   }
 
@@ -252,6 +256,7 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
     
     _gameLoopTimer?.cancel();
     _obstacleTimer?.cancel();
+    _durationTimer?.cancel();
     
     Future.delayed(const Duration(milliseconds: 220), () {
       if (mounted) {
@@ -308,10 +313,20 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
     moveDirection = 0;
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _gameLoopTimer?.cancel();
     _obstacleTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -398,10 +413,19 @@ class _BallRunnerGameState extends State<BallRunnerGame> {
                     ),
                     Column(
                       children: [
-                        Text(
-                          'Speed: ${obstacleSpeed.toStringAsFixed(1)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
+                        if (widget.remainingTime != null)
+                          Text(
+                            'Time: ${widget.remainingTime}s',
+                            style: const TextStyle(fontSize: 12, color: Colors.orange),
+                          ),
+                        if (widget.inactivityTime != null)
+                          Text(
+                            'Inactive: ${widget.inactivityTime}s',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: widget.inactivityTime! <= 5 ? Colors.red : Colors.grey,
+                            ),
+                          ),
                       ],
                     ),
                     GestureDetector(

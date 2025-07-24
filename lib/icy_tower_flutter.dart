@@ -119,7 +119,8 @@ class Ball {
 }
 
 class IcyTowerGameScreen extends StatefulWidget {
-  const IcyTowerGameScreen({super.key});
+  final int durationMinutes;
+  const IcyTowerGameScreen({super.key, this.durationMinutes = 1});
 
   @override
   State<IcyTowerGameScreen> createState() => _IcyTowerGameScreenState();
@@ -162,6 +163,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
   double jumpDirection = 0; // -1 dla lewo, 1 dla prawo, 0 dla neutralny
 
   Timer? _gameLoopTimer;
+  Timer? _durationTimer;
   Size? _screenSize;
 
   @override
@@ -175,6 +177,7 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
         _initializeGame();
       }
     });
+    _startDurationTimer();
   }
 
   void _initializeGame() {
@@ -472,9 +475,19 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
     }
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -603,6 +616,19 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (widget.durationMinutes > 0)
+                            Text(
+                              'Time: ${widget.durationMinutes - _durationTimer!.tick}s',
+                              style: const TextStyle(fontSize: 12, color: Colors.orange),
+                            ),
+                          if (widget.durationMinutes > 0)
+                            Text(
+                              'Remaining: ${_durationTimer!.tick}s',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _durationTimer!.tick <= 5 ? Colors.red : Colors.grey,
+                              ),
+                            ),
                         ],
                       ),
                       Row(

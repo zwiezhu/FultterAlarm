@@ -27,6 +27,7 @@ class MemoryMatchGameScreen extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
 
   const MemoryMatchGameScreen({
     super.key,
@@ -36,6 +37,7 @@ class MemoryMatchGameScreen extends StatefulWidget {
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -73,11 +75,22 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
   Timer? _matchTimer;
   Timer? _countdownTimer;
   Timer? _gameOverTimer;
+  Timer? _durationTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => resetGame());
+    _startDurationTimer();
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
   }
 
   @override
@@ -86,6 +99,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     _matchTimer?.cancel();
     _countdownTimer?.cancel();
     _gameOverTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -184,6 +198,7 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
     _matchTimer?.cancel();
     _countdownTimer?.cancel();
     _gameOverTimer?.cancel();
+    _durationTimer?.cancel();
 
     setState(() {
       cards = generateCards();
@@ -281,27 +296,19 @@ class _MemoryMatchGameScreenState extends State<MemoryMatchGameScreen> {
                   // Stats
                   Column(
                     children: [
-                      Text(
-                        'Moves: $moves',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF999999),
+                      if (widget.remainingTime != null)
+                        Text(
+                          'Time: ${widget.remainingTime}s',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
                         ),
-                      ),
-                      Text(
-                        'Matches: $matches/$totalPairs',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF999999),
+                      if (widget.inactivityTime != null)
+                        Text(
+                          'Inactive: ${widget.inactivityTime}s',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: widget.inactivityTime! <= 5 ? Colors.red : Colors.grey,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Accuracy: ${getAccuracy().toInt()}%',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF999999),
-                        ),
-                      ),
                     ],
                   ),
 

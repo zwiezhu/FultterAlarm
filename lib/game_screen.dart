@@ -23,12 +23,14 @@ class GameScreen extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
   
   const GameScreen({
     super.key,
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -54,6 +56,7 @@ class _GameScreenState extends State<GameScreen> {
   // Timers for game loop and spawning
   Timer? _gameLoopTimer;
   Timer? _tileSpawner;
+  Timer? _durationTimer;
 
   // Screen size, initialized once
   Size? _screenSize;
@@ -68,6 +71,7 @@ class _GameScreenState extends State<GameScreen> {
           _screenSize = MediaQuery.of(context).size;
         });
         resetGame();
+        _startDurationTimer();
       }
     });
   }
@@ -144,6 +148,7 @@ class _GameScreenState extends State<GameScreen> {
       isPaused = true;
       _gameLoopTimer?.cancel();
       _tileSpawner?.cancel();
+      _durationTimer?.cancel();
     });
   }
 
@@ -155,6 +160,15 @@ class _GameScreenState extends State<GameScreen> {
     final newIntervalMs = (initialSpawnIntervalMs * (initialSpeed / speed)).round();
     _tileSpawner = Timer.periodic(Duration(milliseconds: newIntervalMs), (_) {
       _spawnTile();
+    });
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
     });
   }
 
@@ -206,6 +220,7 @@ class _GameScreenState extends State<GameScreen> {
     // IMPORTANT: Cancel timers to prevent memory leaks
     _gameLoopTimer?.cancel();
     _tileSpawner?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 

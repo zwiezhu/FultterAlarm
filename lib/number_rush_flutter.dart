@@ -29,6 +29,7 @@ class NumberRushGameScreen extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
 
   const NumberRushGameScreen({
     super.key,
@@ -38,6 +39,7 @@ class NumberRushGameScreen extends StatefulWidget {
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -57,6 +59,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
   bool showResult = false;
 
   Timer? _gameTimer;
+  Timer? _durationTimer;
   final Random _random = Random();
 
   // Game colors
@@ -71,6 +74,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
   void initState() {
     super.initState();
     _initializeGame();
+    _startDurationTimer();
   }
 
   void _initializeGame() {
@@ -235,6 +239,15 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
     }
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   Color _getTimeColor() {
     if (timeLeft <= 3) return const Color(0xFFff6b6b);
     if (timeLeft <= 6) return const Color(0xFFf7b731);
@@ -249,6 +262,7 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
   @override
   void dispose() {
     _gameTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -291,20 +305,19 @@ class _NumberRushGameScreenState extends State<NumberRushGameScreen> {
                   ),
                   Column(
                     children: [
-                      Text(
-                        'Streak: $streak',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      if (widget.remainingTime != null)
+                        Text(
+                          'Time: ${widget.remainingTime}s',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
                         ),
-                      ),
-                      Text(
-                        'Level: $difficulty',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      if (widget.inactivityTime != null)
+                        Text(
+                          'Inactive: ${widget.inactivityTime}s',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: widget.inactivityTime! <= 5 ? Colors.red : Colors.grey,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   IconButton(

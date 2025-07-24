@@ -80,12 +80,14 @@ class SwipeTilesGameScreen extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  final int durationMinutes;
   
   const SwipeTilesGameScreen({
     super.key,
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -117,6 +119,7 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   Timer? _gameLoopTimer;
   Timer? _tileGenerationTimer;
   Timer? _flashTimer;
+  Timer? _durationTimer;
   
   // Counters
   int _tileId = 1;
@@ -129,7 +132,17 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   @override
   void initState() {
     super.initState();
+    _startDurationTimer();
     // Game will be initialized in build method when context is available
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
   }
 
   void _resetGame() {
@@ -524,6 +537,7 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
     _gameLoopTimer?.cancel();
     _tileGenerationTimer?.cancel();
     _flashTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 

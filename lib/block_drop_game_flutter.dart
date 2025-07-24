@@ -24,12 +24,20 @@ class BlockDropGame extends StatefulWidget {
   final Function(int) onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final VoidCallback? onUserInteraction;
+  final int? remainingTime;
+  final int? inactivityTime;
+  final int durationMinutes;
 
   const BlockDropGame({
     super.key,
     required this.onScoreChange,
     required this.gameCompleted,
     this.casualMode = false,
+    this.onUserInteraction,
+    this.remainingTime,
+    this.inactivityTime,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -65,6 +73,7 @@ class _BlockDropGameState extends State<BlockDropGame> {
   bool fastDrop = false;
 
   Timer? _gameLoopTimer;
+  Timer? _durationTimer;
   final Random _random = Random();
   double _dragAccumulatedDx = 0.0;
 
@@ -73,6 +82,7 @@ class _BlockDropGameState extends State<BlockDropGame> {
     super.initState();
     _initializeGrid();
     _createNewPiece();
+    _startDurationTimer();
   }
 
   void _initializeGrid() {
@@ -289,9 +299,19 @@ class _BlockDropGameState extends State<BlockDropGame> {
     _startGameLoop();
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -330,20 +350,19 @@ class _BlockDropGameState extends State<BlockDropGame> {
                 ),
                 Column(
                   children: [
-                    Text(
-                      'Level $level',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
+                    if (widget.remainingTime != null)
+                      Text(
+                        'Time: ${widget.remainingTime}s',
+                        style: const TextStyle(fontSize: 12, color: Colors.orange),
                       ),
-                    ),
-                    Text(
-                      'Lines: $linesCleared',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF999999),
+                    if (widget.inactivityTime != null)
+                      Text(
+                        'Inactive: ${widget.inactivityTime}s',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.inactivityTime! <= 5 ? Colors.red : Colors.grey,
+                        ),
                       ),
-                    ),
                   ],
                 ),
                 IconButton(
@@ -368,6 +387,8 @@ class _BlockDropGameState extends State<BlockDropGame> {
               },
               onPanUpdate: (details) {
                 if ((widget.gameCompleted && !widget.casualMode) || isPaused || gameOver) return;
+
+                widget.onUserInteraction?.call();
 
                 _dragAccumulatedDx += details.delta.dx;
 

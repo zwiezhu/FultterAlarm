@@ -47,23 +47,15 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
   @override
   void initState() {
     super.initState();
+    durationMinutes = widget.durationMinutes;
+    remainingSeconds = durationMinutes * 60;
     // Nie używaj context tutaj!
     // Pozostała inicjalizacja
     print('AlarmGameScreen: initState called');
     _startAlarmSystem();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Pobierz durationMinutes z argumentów, jeśli dostępne
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args['durationMinutes'] != null) {
-      durationMinutes = args['durationMinutes'] as int;
-      remainingSeconds = durationMinutes * 60;
-      print('AlarmGameScreen: didChangeDependencies called, durationMinutes: $durationMinutes');
-    }
-  }
+  
 
   void _startAlarm() async {
     print('AlarmGameScreen: _startAlarm called');
@@ -226,24 +218,28 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'swipe_tiles':
         return SwipeTilesGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'memory_match':
         return MemoryMatchGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'number_rush':
         return NumberRushGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'sudoku':
         return SudokuGame(
@@ -252,6 +248,7 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'ball_runner':
         return BallRunnerGame(
@@ -259,28 +256,31 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
       case 'block_drop':
         return BlockDropGame(
           onScoreChange: (score) => _handleUserInteraction(),
           gameCompleted: false,
+          durationMinutes: durationMinutes,
         );
       case 'cave_lander':
-        return CaveLanderGameScreen();
+        return CaveLanderGameScreen(durationMinutes: durationMinutes);
       case 'icy_tower':
-        return IcyTowerGameScreen();
+        return IcyTowerGameScreen(durationMinutes: durationMinutes);
       case 'sky_tower':
-        return SkyTowerGameScreen();
+        return SkyTowerGameScreen(durationMinutes: durationMinutes);
       case 'wall_bounce':
-        return WallBounceGame();
+        return WallBounceGame(durationMinutes: durationMinutes);
       case 'wall_kickers':
-        return WallKickersGame();
+        return WallKickersGame(durationMinutes: durationMinutes);
       default:
         // Default to piano tiles game
         return GameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
+          durationMinutes: durationMinutes,
         );
     }
   }

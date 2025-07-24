@@ -121,6 +121,7 @@ class AlarmSchedulerService {
       'hour': alarm.hour,
       'minute': alarm.minute,
       'gameType': alarm.gameType,
+      'durationMinutes': alarm.durationMinutes,
       'selectedDays': alarm.selectedDays.toList(),
     });
   }

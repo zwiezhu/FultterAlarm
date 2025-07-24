@@ -84,12 +84,14 @@ class WallBounceGame extends StatefulWidget {
   final Function(int)? onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final int durationMinutes;
 
   const WallBounceGame({
     Key? key,
     this.onScoreChange,
     this.gameCompleted = false,
     this.casualMode = false,
+    this.durationMinutes = 1,
   }) : super(key: key);
 
   @override
@@ -108,6 +110,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
   double worldTop = 0;
   
   Timer? gameTimer;
+  Timer? _durationTimer;
   final math.Random random = math.Random();
   bool _sizeInitialized = false;
 
@@ -115,6 +118,7 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
   void initState() {
     super.initState();
     _initializeGame();
+    _startDurationTimer();
   }
 
   @override
@@ -146,9 +150,19 @@ class _WallBounceGameState extends State<WallBounceGame> with TickerProviderStat
     worldTop = 0;
   }
 
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
+  }
+
   @override
   void dispose() {
     gameTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 

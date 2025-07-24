@@ -53,6 +53,7 @@ class MethodChannelHandler(private val context: Context) {
         val hour = (alarmData["hour"] as? Number)?.toInt() ?: 0
         val minute = (alarmData["minute"] as? Number)?.toInt() ?: 0
         val gameType = alarmData["gameType"] as? String ?: "piano_tiles"
+        val durationMinutes = (alarmData["durationMinutes"] as? Number)?.toInt() ?: 1
         val selectedDays = alarmData["selectedDays"] as? List<Int> ?: emptyList()
 
         Log.d(TAG, "Scheduling native alarm: $name at $hour:$minute with game: $gameType, selectedDays: $selectedDays")
@@ -96,7 +97,7 @@ class MethodChannelHandler(private val context: Context) {
         val delaySeconds = (calendar.timeInMillis - now.timeInMillis) / 1000
         if (delaySeconds > 0) {
             Log.d(TAG, "Alarm scheduled for $delaySeconds seconds from now (target: ${calendar.time})")
-            alarmScheduler.schedule(alarmItem, delaySeconds.toInt())
+            alarmScheduler.schedule(alarmItem, delaySeconds.toInt(), durationMinutes)
         } else {
             Log.d(TAG, "Alarm time is in the past, not scheduling.")
         }

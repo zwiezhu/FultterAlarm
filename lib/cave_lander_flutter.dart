@@ -24,12 +24,14 @@ class CaveLanderGameScreen extends StatefulWidget {
   final Function(int)? onScoreChange;
   final bool gameCompleted;
   final bool casualMode;
+  final int durationMinutes;
 
   const CaveLanderGameScreen({
     super.key,
     this.onScoreChange,
     this.gameCompleted = false,
     this.casualMode = false,
+    this.durationMinutes = 1,
   });
 
   @override
@@ -92,11 +94,22 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   bool leftEngine = false;
   bool rightEngine = false;
   Timer? gameLoopTimer;
+  Timer? _durationTimer;
   final Random random = Random();
 
   @override
   void initState() {
     super.initState();
+    _startDurationTimer();
+  }
+
+  void _startDurationTimer() {
+    _durationTimer?.cancel();
+    _durationTimer = Timer(Duration(minutes: widget.durationMinutes), () {
+      setState(() {
+        gameOver = true;
+      });
+    });
   }
 
   @override
@@ -415,11 +428,13 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
       isPaused = true;
     });
     gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
   }
 
   void _resetGame() {
     gameLoopTimer?.cancel();
     _initializeGame();
+    _startDurationTimer();
   }
 
   void _togglePause() {
@@ -450,6 +465,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
   @override
   void dispose() {
     gameLoopTimer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
@@ -497,9 +513,17 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
                     ),
                     Column(
                       children: [
-                        Text('Speed: ${forwardSpeed.toStringAsFixed(1)} m/s', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                        if (!canMove)
-                          const Text('Movement Locked', style: TextStyle(fontSize: 10, color: Color(0xFFf7b731))),
+                        Text(
+                          'Time: ${widget.durationMinutes}s',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
+                        ),
+                        Text(
+                          'Inactive: 0s',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: 0 <= 5 ? Colors.red : Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                     GestureDetector(
@@ -661,7 +685,7 @@ class _CaveLanderGameScreenState extends State<CaveLanderGameScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   GestureDetector(
-                    onTapDown: (_) => setState(() => leftEngine = true),
+                    onTapDown: (_) { setState(() => leftEngine = true); },
                     onTapUp: (_) => setState(() => leftEngine = false),
                     onTapCancel: () => setState(() => leftEngine = false),
                     child: Container(

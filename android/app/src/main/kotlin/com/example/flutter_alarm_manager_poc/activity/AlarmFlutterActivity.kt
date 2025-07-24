@@ -19,7 +19,9 @@ class AlarmFlutterActivity : FlutterActivity() {
     }
 
     override fun getInitialRoute(): String? {
-        return "/alarm_game"
+        val gameType = intent.getStringExtra("gameType") ?: "piano_tiles"
+        val duration = intent.getIntExtra("duration", 1)
+        return "/alarm_game?gameType=$gameType&duration=$duration"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
