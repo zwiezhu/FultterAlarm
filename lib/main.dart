@@ -115,7 +115,18 @@ class _MyAppState extends State<MyApp> {
             onSnooze: () {},
             alarmTime: DateTime.now(),
           ),
-          // Dodaj inne trasy jeśli są potrzebne
+          '/game': (context) => const GameScreen(),
+          '/sky_tower_game': (context) => const SkyTowerGameScreen(),
+          '/wall_bounce_game': (context) => const WallBounceGame(),
+          '/icy_tower_game': (context) => const IcyTowerGameScreen(),
+          '/cave_lander_game': (context) => const CaveLanderGameScreen(),
+          '/wall_kickers_game': (context) => const WallKickersGame(),
+          '/ball_runner_game': (context) => BallRunnerGame(onScoreChange: (score) {}),
+          '/swipe_tiles_game': (context) => const SwipeTilesGameScreen(),
+          '/memory_match_game': (context) => const MemoryMatchGameScreen(),
+          '/number_rush_game': (context) => const NumberRushGameScreen(),
+          '/sudoku_game': (context) => SudokuGame(onScoreChange: (score) {}, gameCompleted: false),
+          '/block_drop_game': (context) => BlockDropGame(onScoreChange: (score) {}, gameCompleted: false),
         },
         onGenerateRoute: (settings) {
           final uri = Uri.parse(settings.name ?? '');
