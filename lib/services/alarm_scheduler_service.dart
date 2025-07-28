@@ -157,18 +157,14 @@ class AlarmSchedulerService {
         // If alarm time is in the past today, check if it's today and move to next occurrence
         DateTime finalAlarmTime;
         if (alarmTime.isBefore(now)) {
-          if (daysUntilAlarm == 0) {
-            // If it's today but time has passed, move to next occurrence
-            finalAlarmTime = alarmTime.add(const Duration(days: 7));
-          } else {
-            // If it's a future day but time calculation is wrong, skip
-            continue;
-          }
+          // If it's today but time has passed, move to the same day next week
+          finalAlarmTime = alarmTime.add(const Duration(days: 7));
         } else {
           finalAlarmTime = alarmTime;
         }
             
         if (nextAlarm == null || finalAlarmTime.isBefore(nextAlarm)) {
+          log('Updating next alarm: ${finalAlarmTime.day}/${finalAlarmTime.month} at ${finalAlarmTime.hour}:${finalAlarmTime.minute}');
           nextAlarm = finalAlarmTime;
         }
       }
