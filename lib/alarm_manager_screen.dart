@@ -8,7 +8,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'hive/models/alarm_settings.dart';
 import 'hive/service/database_service.dart';
-import 'services/alarm_scheduler_service.dart';
 import 'dart:async';
 
 class AlarmManagerScreen extends StatefulWidget {
@@ -28,10 +27,6 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
     super.initState();
     // Inicjalizuj bazę danych
     DatabaseService.instance.initializeHive();
-    // Uruchom scheduler alarmów (jeśli nie jest już uruchomiony)
-    if (!AlarmSchedulerService.instance.isRunning) {
-      AlarmSchedulerService.instance.startScheduler();
-    }
     _nowNotifier = ValueNotifier<DateTime>(DateTime.now());
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _nowNotifier.value = DateTime.now();
@@ -105,41 +100,7 @@ class _AlarmManagerScreenState extends State<AlarmManagerScreen> {
       ),
       body: Column(
         children: [
-          // Informacja o następnym alarmie
-          ValueListenableBuilder(
-            valueListenable: DatabaseService.instance.alarmSettingsBoxListenable,
-            builder: (context, box, child) {
-              return ValueListenableBuilder<DateTime>(
-                valueListenable: _nowNotifier,
-                builder: (context, now, _) {
-                  AlarmSchedulerService.instance.refreshAlarms();
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.grey[900],
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.schedule,
-                          color: Colors.blue,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            AlarmSchedulerService.instance.getNextAlarmString(),
-                            style: TextStyle(
-                              color: Colors.grey[300],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          
           
           // Lista alarmów
           Expanded(

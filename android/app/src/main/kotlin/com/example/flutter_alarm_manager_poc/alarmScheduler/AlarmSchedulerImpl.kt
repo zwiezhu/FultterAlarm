@@ -63,6 +63,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putLong("alarm_${alarmItem.id}_time", triggerTime)
             putString("alarm_${alarmItem.id}_message", alarmItem.message)
             putString("alarm_${alarmItem.id}_game", alarmItem.gameType)
+            putInt("alarm_${alarmItem.id}_duration", durationMinutes)
             putBoolean("alarm_${alarmItem.id}_active", true)
             apply()
         }
@@ -94,6 +95,7 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             remove("alarm_${alarmItem.id}_time")
             remove("alarm_${alarmItem.id}_message")
             remove("alarm_${alarmItem.id}_game")
+            remove("alarm_${alarmItem.id}_duration")
             remove("alarm_${alarmItem.id}_active")
             apply()
         }

@@ -73,33 +73,48 @@ class MethodChannelHandler(private val context: Context) {
         }
 
         if (selectedDays.isNotEmpty()) {
-            val today = now.get(java.util.Calendar.DAY_OF_WEEK)
-            val todayDart = if (today == 1) 7 else today - 1
-            var minDaysDiff = 7
+            val today = now.get(java.util.Calendar.DAY_OF_WEEK) // Sunday = 1, Saturday = 7
+            val todayDart = if (today == 1) 7 else today - 1 // Monday = 1, Sunday = 7
+
+            var nextAlarmTime: Long? = null
+
             for (day in selectedDays) {
+                val calendarClone = calendar.clone() as java.util.Calendar
+                
                 var daysDiff = (day - todayDart + 7) % 7
-                if (daysDiff == 0 && calendar.timeInMillis <= now.timeInMillis) {
-                    daysDiff = 7
+                if (daysDiff == 0 && calendarClone.timeInMillis <= now.timeInMillis) {
+                    daysDiff = 7 // If today, but time has passed, schedule for next week
                 }
-                if (daysDiff < minDaysDiff) {
-                    minDaysDiff = daysDiff
+
+                calendarClone.add(java.util.Calendar.DAY_OF_YEAR, daysDiff)
+
+                if (nextAlarmTime == null || calendarClone.timeInMillis < nextAlarmTime) {
+                    nextAlarmTime = calendarClone.timeInMillis
                 }
             }
-            if (minDaysDiff != 7) { // Add days only if a valid day is found
-                calendar.add(java.util.Calendar.DAY_OF_YEAR, minDaysDiff)
+            
+            if (nextAlarmTime != null) {
+                val delaySeconds = (nextAlarmTime - now.timeInMillis) / 1000
+                if (delaySeconds > 0) {
+                    Log.d(TAG, "Alarm scheduled for $delaySeconds seconds from now (target: ${java.util.Date(nextAlarmTime)})")
+                    alarmScheduler.schedule(alarmItem, delaySeconds.toInt(), durationMinutes)
+                } else {
+                    Log.d(TAG, "Alarm time is in the past, not scheduling.")
+                }
+            } else {
+                Log.d(TAG, "No valid future alarm day found.")
             }
         } else {
             if (calendar.timeInMillis <= now.timeInMillis) {
                 calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
             }
-        }
-
-        val delaySeconds = (calendar.timeInMillis - now.timeInMillis) / 1000
-        if (delaySeconds > 0) {
-            Log.d(TAG, "Alarm scheduled for $delaySeconds seconds from now (target: ${calendar.time})")
-            alarmScheduler.schedule(alarmItem, delaySeconds.toInt(), durationMinutes)
-        } else {
-            Log.d(TAG, "Alarm time is in the past, not scheduling.")
+            val delaySeconds = (calendar.timeInMillis - now.timeInMillis) / 1000
+            if (delaySeconds > 0) {
+                Log.d(TAG, "Alarm scheduled for $delaySeconds seconds from now (target: ${calendar.time})")
+                alarmScheduler.schedule(alarmItem, delaySeconds.toInt(), durationMinutes)
+            } else {
+                Log.d(TAG, "Alarm time is in the past, not scheduling.")
+            }
         }
     }
 }

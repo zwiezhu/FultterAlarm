@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_alarm_manager_poc/utils/alarm_method_channel.dart';
 import 'package:intl/intl.dart';
 import 'hive/models/alarm_settings.dart';
 import 'hive/service/database_service.dart';
-import 'services/alarm_scheduler_service.dart';
 
 class AlarmSettingsScreen extends StatefulWidget {
   const AlarmSettingsScreen({super.key});
@@ -418,9 +418,20 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
 
     // Zapisz alarm
     await DatabaseService.instance.saveAlarmSettings(alarmSettings);
-    
+
+    // Schedule native Android alarm for better reliability
+    AlarmMethodChannel.scheduleNativeAlarm({
+      'id': alarmSettings.id,
+      'name': alarmSettings.name,
+      'hour': alarmSettings.hour,
+      'minute': alarmSettings.minute,
+      'gameType': alarmSettings.gameType,
+      'durationMinutes': alarmSettings.durationMinutes,
+      'selectedDays': alarmSettings.selectedDays.toList(),
+    });
+
     // Odśwież scheduler
-    AlarmSchedulerService.instance.refreshAlarms();
+    // AlarmSchedulerService.instance.refreshAlarms();
 
     // Pokaż potwierdzenie
     final selectedDaysList = selectedDays.toList()..sort();

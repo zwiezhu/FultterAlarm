@@ -52,7 +52,11 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
   @override
   void initState() {
     super.initState();
-    // Game will be reset and started when build method is called for the first time
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        resetGame();
+      }
+    });
     _startDurationTimer();
   }
 
@@ -81,7 +85,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
     if (gameOver) return;
     final gameWidth = MediaQuery.of(context).size.width;
     final lastBlock = blocks.last;
-    final newWidth = max(40.0, lastBlock.width - (Random().nextDouble() * 10));
+    final newWidth = max(10.0, lastBlock.width - (Random().nextDouble() * 8 + 2));
     final random = Random();
 
     setState(() {
@@ -187,7 +191,7 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
                       children: [
                         // Ground - always at bottom
                         Positioned(
-                          bottom: 0,
+                          bottom: -cameraY,
                           left: 0,
                           right: 0,
                           child: Container(
