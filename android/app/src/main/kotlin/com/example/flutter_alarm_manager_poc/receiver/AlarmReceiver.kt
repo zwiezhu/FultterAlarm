@@ -63,5 +63,15 @@ class AlarmReceiver : BroadcastReceiver() {
             fullScreenPendingIntent = fullScreenPendingIntent
         )
         Log.d(TAG, "Notification with full-screen intent shown")
+
+        // Explicitly start the AlarmActivity to ensure the UI is displayed
+        // even if the system does not automatically launch the full-screen
+        // intent (which can happen on some devices when the screen is locked).
+        try {
+            context.startActivity(fullScreenIntent)
+            Log.d(TAG, "AlarmActivity started explicitly from receiver")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start AlarmActivity: ${e.message}")
+        }
     }
 }
