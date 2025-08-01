@@ -211,38 +211,43 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Return the appropriate game based on gameType
+    // Choose the appropriate game widget based on gameType
+    Widget gameWidget;
     switch (widget.gameType) {
       case 'piano_tiles':
-        return GameScreen(
+        gameWidget = GameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'swipe_tiles':
-        return SwipeTilesGameScreen(
+        gameWidget = SwipeTilesGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'memory_match':
-        return MemoryMatchGameScreen(
+        gameWidget = MemoryMatchGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'number_rush':
-        return NumberRushGameScreen(
+        gameWidget = NumberRushGameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'sudoku':
-        return SudokuGame(
+        gameWidget = SudokuGame(
           onScoreChange: (score) => _handleUserInteraction(),
           gameCompleted: false,
           onUserInteraction: _handleUserInteraction,
@@ -250,38 +255,55 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> {
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'ball_runner':
-        return BallRunnerGame(
+        gameWidget = BallRunnerGame(
           onScoreChange: (score) => _handleUserInteraction(),
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'block_drop':
-        return BlockDropGame(
+        gameWidget = BlockDropGame(
           onScoreChange: (score) => _handleUserInteraction(),
           gameCompleted: false,
           durationMinutes: durationMinutes,
         );
+        break;
       case 'cave_lander':
-        return CaveLanderGameScreen(durationMinutes: durationMinutes);
+        gameWidget = CaveLanderGameScreen(durationMinutes: durationMinutes);
+        break;
       case 'icy_tower':
-        return IcyTowerGameScreen(durationMinutes: durationMinutes);
+        gameWidget = IcyTowerGameScreen(durationMinutes: durationMinutes);
+        break;
       case 'sky_tower':
-        return SkyTowerGameScreen(durationMinutes: durationMinutes);
+        gameWidget = SkyTowerGameScreen(durationMinutes: durationMinutes);
+        break;
       case 'wall_bounce':
-        return WallBounceGame(durationMinutes: durationMinutes);
+        gameWidget = WallBounceGame(durationMinutes: durationMinutes);
+        break;
       case 'wall_kickers':
-        return WallKickersGame(durationMinutes: durationMinutes);
+        gameWidget = WallKickersGame(durationMinutes: durationMinutes);
+        break;
       default:
         // Default to piano tiles game
-        return GameScreen(
+        gameWidget = GameScreen(
           onUserInteraction: _handleUserInteraction,
           remainingTime: remainingSeconds,
           inactivityTime: inactivityTimer,
           durationMinutes: durationMinutes,
         );
+        break;
     }
+
+    // Wrap the game widget to globally capture user interaction
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTapDown: (_) => _handleUserInteraction(),
+      onPanDown: (_) => _handleUserInteraction(),
+      child: gameWidget,
+    );
   }
-} 
+}
