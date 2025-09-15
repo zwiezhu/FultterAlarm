@@ -1,4 +1,4 @@
-# Flutter Alarm Manager POC
+# Flutter Alarm Manager TEST
 
 ![alt text](972shots_so.png)
 
