@@ -75,6 +75,17 @@ class AlarmActivity : ComponentActivity() {
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val alarmTime = intent.getLongExtra("ALARM_TIME", System.currentTimeMillis())
         val gameType = intent.getStringExtra("ALARM_GAME_TYPE") ?: "piano_tiles"
+        var durationMinutes = intent.getIntExtra("ALARM_DURATION_MINUTES", 1)
+        if (durationMinutes <= 0 || durationMinutes == 1) {
+            // Fallback to persisted duration if available
+            try {
+                val prefs = getSharedPreferences("alarm_prefs", MODE_PRIVATE)
+                if (alarmId > 0) {
+                    val persisted = prefs.getInt("alarm_${alarmId}_duration", -1)
+                    if (persisted > 0) durationMinutes = persisted
+                }
+            } catch (_: Exception) {}
+        }
 
         // Initialize volume control
         initializeVolumeControl()
@@ -82,10 +93,21 @@ class AlarmActivity : ComponentActivity() {
         alarmNotificationService = AlarmNotificationServiceImpl(this)
         alarmScheduler = AlarmSchedulerImpl(this)
         alarmSoundService = AlarmSoundServiceImpl(this)
-        
-        // Start alarm sound immediately when activity opens
-        Log.d(TAG, "Starting alarm sound on activity creation")
-        alarmSoundService.startAlarmSound()
+
+        // Cancel the ongoing notification immediately when activity is shown to avoid
+        // (1) duplicated notification sound overlapping with MediaPlayer and
+        // (2) repeated taps re-launching new instances.
+        if (alarmId != -1) {
+            try {
+                alarmNotificationService.cancelNotification(alarmId)
+                Log.d(TAG, "Cancelled notification on activity start for id=$alarmId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to cancel notification on start: ${e.message}")
+            }
+        }
+
+        // Ringing is controlled by Foreground Service; do not start local MediaPlayer here to avoid duplication
+        Log.d(TAG, "AlarmActivity created; ringing handled by RingingService")
 
         // Check if a cached engine is available
         flutterEngine = FlutterEngineCache.getInstance().get(ENGINE_ID)
@@ -132,15 +154,20 @@ class AlarmActivity : ComponentActivity() {
                     AlarmScreen(
                         onPlay = {
                             Log.d(TAG, "Play button clicked")
-                            // Stop alarm sound when user starts playing
-                            alarmSoundService.stopAlarmSound()
+                            // Pause ringing while user starts playing
+                            val svcIntent = Intent(this@AlarmActivity, com.example.flutter_alarm_manager_poc.service.RingingService::class.java).apply {
+                                action = com.example.flutter_alarm_manager_poc.service.RingingService.ACTION_PAUSE_RING
+                            }
+                            startService(svcIntent)
                             channel.invokeMethod("alarmAccepted", null)
                             alarmNotificationService.cancelNotification(alarmId)
                             
-                            // Pass alarm time and gameType through method channel and navigate
+                            // Pass alarm details and navigate
                             val alarmArgs = mapOf(
+                                "alarmId" to alarmId,
                                 "alarmTime" to alarmTime,
-                                "gameType" to gameType
+                                "gameType" to gameType,
+                                "durationMinutes" to durationMinutes
                             )
                             channel.invokeMethod("navigateToAlarmGame", alarmArgs)
                             
@@ -148,6 +175,8 @@ class AlarmActivity : ComponentActivity() {
                             val intent = Intent(this@AlarmActivity, AlarmFlutterActivity::class.java).apply {
                                 putExtra("alarmTime", alarmTime)
                                 putExtra("gameType", gameType)
+                                putExtra("durationMinutes", durationMinutes)
+                                putExtra("alarmId", alarmId)
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
                                        Intent.FLAG_ACTIVITY_NO_ANIMATION or
@@ -156,14 +185,17 @@ class AlarmActivity : ComponentActivity() {
                                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
                                        Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
                             }
-                            
+
                             startActivity(intent)
                             finish() // Close AlarmActivity after starting game
                         },
                         onSnooze = {
                             Log.d(TAG, "Snooze button clicked")
-                            // Stop alarm sound when user snoozes
-                            alarmSoundService.stopAlarmSound()
+                            // Stop foreground ringing service on snooze
+                            val svcIntent = Intent(this@AlarmActivity, com.example.flutter_alarm_manager_poc.service.RingingService::class.java).apply {
+                                action = com.example.flutter_alarm_manager_poc.service.RingingService.ACTION_STOP_SERVICE
+                            }
+                            startService(svcIntent)
                             channel.invokeMethod("alarmSnoozed", null)
                             snoozeAlarm()
                             alarmNotificationService.cancelNotification(alarmId)
@@ -172,6 +204,22 @@ class AlarmActivity : ComponentActivity() {
                         alarmTime = alarmTime
                     )
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        Log.d(TAG, "onNewIntent received: ${intent.extras}")
+        // Bring to front without restarting alarm sound to avoid overlaps
+        // If needed, we can refresh extras (id/game) here without starting sound again.
+        val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        if (alarmId != -1) {
+            try {
+                alarmNotificationService.cancelNotification(alarmId)
+                Log.d(TAG, "Cancelled notification on new intent for id=$alarmId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to cancel notification on new intent: ${e.message}")
             }
         }
     }

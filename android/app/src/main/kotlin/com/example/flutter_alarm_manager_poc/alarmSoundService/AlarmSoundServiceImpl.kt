@@ -10,7 +10,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.example.flutter_alarm_manager_poc.R
+import android.provider.Settings
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.*
 
@@ -147,7 +147,11 @@ class AlarmSoundServiceImpl(private val context: Context) : AlarmSoundService {
             // Create new MediaPlayer
             Log.d(TAG, "Creating MediaPlayer...")
             mediaPlayer = MediaPlayer().apply {
-                val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
+                // Use system default alarm tone with fallbacks
+                val primary = Settings.System.DEFAULT_ALARM_ALERT_URI
+                val fallback1 = Settings.System.DEFAULT_RINGTONE_URI
+                val fallback2 = Settings.System.DEFAULT_NOTIFICATION_URI
+                val soundUri: Uri = primary ?: fallback1 ?: fallback2
                 Log.d(TAG, "Sound URI: $soundUri")
                 setDataSource(context, soundUri)
                 

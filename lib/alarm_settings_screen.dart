@@ -427,6 +427,7 @@ class _AlarmSettingsScreenState extends State<AlarmSettingsScreen> {
       'hour': alarmSettings.hour,
       'minute': alarmSettings.minute,
       'gameType': alarmSettings.gameType,
+      'durationMinutes': alarmSettings.durationMinutes,
       'selectedDays': alarmSettings.selectedDays,
     });
     

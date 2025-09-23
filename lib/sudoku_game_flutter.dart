@@ -212,6 +212,7 @@ class _SudokuGameState extends State<SudokuGame> with TickerProviderStateMixin {
   void _showWinDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Congratulations!'),
         content: const Text('You have solved the sudoku!'),

@@ -69,8 +69,15 @@ class _MyAppState extends State<MyApp> {
     await Permission.notification.request();
     // Dokładne alarmy (Android 12+)
     if (defaultTargetPlatform == TargetPlatform.android) {
-      if (await Permission.scheduleExactAlarm.isDenied) {
-        await Permission.scheduleExactAlarm.request();
+      // Spróbuj sprawdzić i poprosić o zgodę na exact alarms przez kanał natywny
+      final exactAllowed = await AlarmMethodChannel.isExactAlarmAllowed();
+      if (!exactAllowed) {
+        await AlarmMethodChannel.requestExactAlarmPermission();
+      }
+      // Wyłączenie optymalizacji baterii dla niezawodności alarmów
+      final ignoring = await AlarmMethodChannel.isIgnoringBatteryOptimizations();
+      if (!ignoring) {
+        await AlarmMethodChannel.requestIgnoreBatteryOptimizations();
       }
     }
   }
@@ -121,20 +128,33 @@ class _MyAppState extends State<MyApp> {
               if (uri.path == '/alarm_game') {
                 final alarmTimeParam = uri.queryParameters['alarmTime'];
                 final gameTypeParam = uri.queryParameters['gameType'];
+                final durationParam = uri.queryParameters['durationMinutes'];
                 
                 if (alarmTimeParam != null && gameTypeParam != null) {
                   args = {
                     'alarmTime': int.tryParse(alarmTimeParam) ?? DateTime.now().millisecondsSinceEpoch,
                     'gameType': gameTypeParam,
+                    'durationMinutes': int.tryParse(durationParam ?? '') ?? 1,
                   };
                 }
               }
             }
             
-            args ??= AlarmMethodChannel.getPendingAlarmArgs();
+            // Prefer pending args from native if available (override partial/empty route args)
+            final pendingArgs = AlarmMethodChannel.getPendingAlarmArgs();
+            if (pendingArgs != null) {
+              if (args == null) {
+                args = Map<String, dynamic>.from(pendingArgs);
+              } else {
+                for (final entry in pendingArgs.entries) {
+                  args![entry.key] = entry.value;
+                }
+              }
+            }
             
             DateTime alarmTime;
             String gameType;
+            int? alarmId;
             if (args != null) {
               if (args['alarmTime'] is DateTime) {
                 alarmTime = args['alarmTime'] as DateTime;
@@ -144,6 +164,9 @@ class _MyAppState extends State<MyApp> {
                 alarmTime = DateTime.now();
               }
               gameType = args['gameType'] as String? ?? 'piano_tiles';
+              if (args['alarmId'] is int) {
+                alarmId = args['alarmId'] as int;
+              }
             } else {
               alarmTime = DateTime.now();
               gameType = 'piano_tiles';
@@ -153,7 +176,7 @@ class _MyAppState extends State<MyApp> {
             if (args != null && args['durationMinutes'] != null) {
               durationMinutes = args['durationMinutes'] as int;
             }
-            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType, durationMinutes: durationMinutes);
+            return AlarmGameScreen(alarmTime: alarmTime, gameType: gameType, durationMinutes: durationMinutes, alarmId: alarmId);
           },
           '/game': (context) => const GameScreen(), // Piano Tiles game
           '/sky_tower_game': (context) => const SkyTowerGameScreen(), // Sky Tower game

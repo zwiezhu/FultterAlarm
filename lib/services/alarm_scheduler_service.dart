@@ -75,6 +75,7 @@ class AlarmSchedulerService {
         'hour': alarm.hour,
         'minute': alarm.minute,
         'gameType': alarm.gameType,
+        'durationMinutes': alarm.durationMinutes,
         'selectedDays': alarm.selectedDays.toList(),
       });
     }
@@ -108,7 +109,8 @@ class AlarmSchedulerService {
         final timeDifference = now.difference(alarmTime).abs();
         
         // Create unique key for this alarm on this day
-        final alarmKey = '${todayKey}-${alarm.hour}-${alarm.minute}';
+        // Include unique alarm id to avoid collisions when multiple alarms share the same time
+        final alarmKey = '${todayKey}-${alarm.id}-${alarm.hour}-${alarm.minute}';
         
         log('Alarm time check - Current: ${now.hour}:${now.minute}:${now.second}, Alarm: ${alarm.hour}:${alarm.minute}, Difference: ${timeDifference.inSeconds}s, Already triggered: ${_triggeredAlarms.contains(alarmKey)}');
         
@@ -133,6 +135,7 @@ class AlarmSchedulerService {
       'hour': alarm.hour,
       'minute': alarm.minute,
       'gameType': alarm.gameType,
+      'durationMinutes': alarm.durationMinutes,
       'selectedDays': alarm.selectedDays.toList(),
     });
   }

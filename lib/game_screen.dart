@@ -23,12 +23,15 @@ class GameScreen extends StatefulWidget {
   final VoidCallback? onUserInteraction;
   final int? remainingTime;
   final int? inactivityTime;
+  // When true, restrict UI for alarm use (no exit to menu)
+  final bool alarmMode;
   
   const GameScreen({
     super.key,
     this.onUserInteraction,
     this.remainingTime,
     this.inactivityTime,
+    this.alarmMode = false,
   });
 
   @override
@@ -350,18 +353,20 @@ class _GameScreenState extends State<GameScreen> {
                             color: Colors.white70,
                           ),
                         ),
-                      const SizedBox(height: 48),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      if (!widget.alarmMode) ...[
+                        const SizedBox(height: 48),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          ),
+                          onPressed: () {
+                            // Pop the game screen to go back to the list
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Exit to Menu', style: TextStyle(fontSize: 18)),
                         ),
-                        onPressed: () {
-                          // Pop the game screen to go back to the list
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Exit to Menu', style: TextStyle(fontSize: 18)),
-                      ),
+                      ],
                     ],
                   ),
                 ),

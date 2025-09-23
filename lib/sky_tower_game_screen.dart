@@ -14,7 +14,8 @@ class Block {
 }
 
 class SkyTowerGameScreen extends StatefulWidget {
-  const SkyTowerGameScreen({super.key});
+  final bool alarmMode;
+  const SkyTowerGameScreen({super.key, this.alarmMode = false});
 
   @override
   State<SkyTowerGameScreen> createState() => _SkyTowerGameScreenState();
@@ -300,10 +301,11 @@ class _SkyTowerGameScreenState extends State<SkyTowerGameScreen> {
                             child: const Text('Restart'),
                           ),
                           const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Exit'),
-                          ),
+                          if (!widget.alarmMode)
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Exit'),
+                            ),
                         ],
                       )
                     ],

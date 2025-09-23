@@ -2,6 +2,7 @@ package com.example.flutter_alarm_manager_poc.alarmNotificationService
 
 import android.media.AudioAttributes
 import android.net.Uri
+import android.provider.Settings
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -35,8 +36,8 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 enableLights(true)
                 enableVibration(true)
-
-                val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
+                // Make channel audible using default alarm tone
+                val soundUri = Settings.System.DEFAULT_ALARM_ALERT_URI
                 val audioAttributes = AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .setUsage(AudioAttributes.USAGE_ALARM)
@@ -48,8 +49,6 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
     }
 
     override fun showNotification(alarmItem: AlarmItem, alarmTime: Long, fullScreenPendingIntent: PendingIntent) {
-        val soundUri = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.alarm)
-
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.notification_bell)
             .setContentTitle("Alarm")
@@ -57,14 +56,14 @@ class AlarmNotificationServiceImpl(private val context: Context) : AlarmNotifica
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(fullScreenPendingIntent, true)
-            .setOngoing(true) // to make the notification persistent
-            .setAutoCancel(false) // to prevent the notification from being dismissed
-            .setSound(soundUri)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setSound(Settings.System.DEFAULT_ALARM_ALERT_URI)
 
 
         val notification = notificationBuilder.build().apply {
-            // to make the notification sound repeat until the user responds.
-            // flags = flags or Notification.FLAG_INSISTENT or Notification.FLAG_NO_CLEAR
+            // Repeat sound until user responds and prevent swipe-away
+            flags = flags or Notification.FLAG_INSISTENT or Notification.FLAG_NO_CLEAR
         }
 
         notificationManager.notify(alarmItem.id, notification)

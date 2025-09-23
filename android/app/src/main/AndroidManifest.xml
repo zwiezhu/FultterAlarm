@@ -92,6 +92,11 @@
             android:enabled="true"
             android:exported="false"
             android:permission="android.permission.WAKE_LOCK" />
+        
+        <service
+            android:name=".service.RingingService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"

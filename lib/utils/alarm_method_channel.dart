@@ -2,15 +2,19 @@ import 'dart:developer';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_alarm_manager_poc/hive/service/database_service.dart';
+import 'package:flutter_alarm_manager_poc/utils/app_logger.dart';
 
 class AlarmMethodChannel {
   static const name = "Flutter";
   static const platform = MethodChannel('com.example/alarm_manager');
 
-  static Future<void> scheduleAlarmWithGame(String gameType) async {
+  static Future<void> scheduleAlarmWithGame(String gameType, {int delaySeconds = 10}) async {
     try {
-      log(name: name, 'Scheduling alarm with game: $gameType');
-      await platform.invokeMethod('scheduleAlarmWithGame', {'gameType': gameType});
+      log(name: name, 'Scheduling alarm with game: $gameType in $delaySeconds s');
+      await platform.invokeMethod('scheduleAlarmWithGame', {
+        'gameType': gameType,
+        'delaySeconds': delaySeconds,
+      });
       log(name: name, 'Alarm with game scheduled successfully');
     } on PlatformException catch (e) {
       log("Failed to schedule alarm with game: '${e.message}'.");
@@ -47,6 +51,74 @@ class AlarmMethodChannel {
     }
   }
 
+  // Exact alarm + battery optimization helpers
+  static Future<bool> isExactAlarmAllowed() async {
+    try {
+      final allowed = await platform.invokeMethod('isExactAlarmAllowed');
+      return (allowed == true);
+    } on PlatformException catch (e) {
+      log("Failed to check exact alarm permission: '${e.message}'.");
+      return false;
+    }
+  }
+
+  static Future<bool> requestExactAlarmPermission() async {
+    try {
+      await platform.invokeMethod('requestExactAlarmPermission');
+      return true;
+    } on PlatformException catch (e) {
+      log("Failed to request exact alarm permission: '${e.message}'.");
+      return false;
+    }
+  }
+
+  static Future<bool> isIgnoringBatteryOptimizations() async {
+    try {
+      final ignoring = await platform.invokeMethod('isIgnoringBatteryOptimizations');
+      return (ignoring == true);
+    } on PlatformException catch (e) {
+      log("Failed to check battery optimizations: '${e.message}'.");
+      return false;
+    }
+  }
+
+  static Future<bool> requestIgnoreBatteryOptimizations() async {
+    try {
+      await platform.invokeMethod('requestIgnoreBatteryOptimizations');
+      return true;
+    } on PlatformException catch (e) {
+      log("Failed to request ignore battery optimizations: '${e.message}'.");
+      return false;
+    }
+  }
+
+  static Future<void> setAlarmActive(bool active) async {
+    try {
+      await platform.invokeMethod('setAlarmActive', active);
+    } on PlatformException catch (e) {
+      log("Failed to set alarm_active: '${e.message}'.");
+    }
+  }
+
+  static Future<void> alarmCompleted() async {
+    try {
+      await platform.invokeMethod('alarmCompleted');
+    } on PlatformException catch (e) {
+      log("Failed to mark alarm completed: '${e.message}'.");
+    }
+  }
+
+  static Future<void> alarmHandled({required int alarmId, int suppressSeconds = 180}) async {
+    try {
+      await platform.invokeMethod('alarmHandled', {
+        'alarmId': alarmId,
+        'suppressSeconds': suppressSeconds,
+      });
+    } on PlatformException catch (e) {
+      log("Failed to mark alarm handled: '${e.message}'.");
+    }
+  }
+
   static DateTime? _pendingAlarmTime;
 
   static void setPendingAlarmTime(DateTime alarmTime) {
@@ -66,9 +138,12 @@ class AlarmMethodChannel {
   }
 
   static Map<String, dynamic>? getPendingAlarmArgs() {
-    final args = _pendingAlarmArgs;
-    _pendingAlarmArgs = null; // Clear after getting
-    return args;
+    // Persist args across rebuilds to avoid falling back to defaults
+    return _pendingAlarmArgs;
+  }
+
+  static void clearPendingAlarmArgs() {
+    _pendingAlarmArgs = null;
   }
 
   static void initialize() {
@@ -79,12 +154,14 @@ class AlarmMethodChannel {
 
   static Future<dynamic> _handleMethodCall(MethodCall call) async {
     log(name: name, 'Received method call: ${call.method}');
+    AppLogger.instance.log('MC call: ${call.method}');
 
     // var alarmBox = Hive.box<AlarmAction>('alarm_actions');
 
     switch (call.method) {
       case 'alarmAccepted':
         log(name: name, 'Alarm was accepted');
+        AppLogger.instance.log('Alarm accepted');
         //   await alarmBox.add(AlarmAction('accept', DateTime.now()));
 
         await DatabaseService.instance.storeAlarmAction("accept");
@@ -94,6 +171,7 @@ class AlarmMethodChannel {
         break;
       case 'alarmSnoozed':
         log(name: name, 'Alarm was snoozed');
+        AppLogger.instance.log('Alarm snoozed');
         // await alarmBox.add(AlarmAction('snooze', DateTime.now()));
 
         await DatabaseService.instance.storeAlarmAction("snooze");
@@ -103,13 +181,20 @@ class AlarmMethodChannel {
         break;
       case 'navigateToAlarmGame':
         log(name: name, 'Navigating to alarm game');
+        AppLogger.instance.log('Navigate to game');
         final args = Map<String, dynamic>.from(call.arguments);
         setPendingAlarmArgs(args);
+        final dm = args['durationMinutes'];
+        final gt = args['gameType'];
+        AppLogger.instance.log('Args: game=$gt, duration=$dm');
         break;
       case 'setPendingAlarmArgs':
         log(name: name, 'Setting pending alarm args');
         final args = Map<String, dynamic>.from(call.arguments);
         setPendingAlarmArgs(args);
+        final dm = args['durationMinutes'];
+        final gt = args['gameType'];
+        AppLogger.instance.log('Pending args: game=$gt, duration=$dm');
         break;
       case 'setMaxVolume':
         log(name: name, 'Setting max volume - handled by native code');
