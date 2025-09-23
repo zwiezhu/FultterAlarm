@@ -11,11 +11,15 @@ class AlarmSchedulerService {
   List<AlarmSettings> _activeAlarms = [];
   Set<String> _triggeredAlarms = {}; // Track triggered alarms to avoid duplicates
   bool _isRunning = false;
+  DateTime Function() _nowProvider = DateTime.now;
+  late void Function(AlarmSettings) _alarmTriggerHandler;
   
   bool get isRunning => _isRunning;
 
   // Private constructor
-  AlarmSchedulerService._();
+  AlarmSchedulerService._() {
+    _alarmTriggerHandler = _defaultTriggerHandler;
+  }
 
   // Singleton instance getter
   static AlarmSchedulerService get instance {
@@ -48,7 +52,7 @@ class AlarmSchedulerService {
   // Schedule daily reset of triggered alarms
   void _scheduleDailyReset() {
     // Calculate time until next midnight
-    final now = DateTime.now();
+    final now = _nowProvider();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final timeUntilMidnight = tomorrow.difference(now);
     
@@ -92,8 +96,8 @@ class AlarmSchedulerService {
   }
 
   // Check if any alarms should trigger
-  void _checkAlarms() {
-    final now = DateTime.now();
+  void _checkAlarms({DateTime? nowOverride}) {
+    final now = nowOverride ?? _nowProvider();
     final currentDayOfWeek = now.weekday; // 1 = Monday, 7 = Sunday
     final todayKey = '${now.year}-${now.month}-${now.day}';
     
@@ -126,8 +130,12 @@ class AlarmSchedulerService {
 
   // Trigger an alarm
   void _triggerAlarm(AlarmSettings alarm) {
+    _alarmTriggerHandler(alarm);
+  }
+
+  void _defaultTriggerHandler(AlarmSettings alarm) {
     log('Triggering alarm:  [31m [1m${alarm.name} [0m at ${alarm.timeString} with game: ${alarm.gameType}');
-    
+
     // Schedule native Android alarm for better reliability
     AlarmMethodChannel.scheduleNativeAlarm({
       'id': alarm.id,
@@ -147,7 +155,7 @@ class AlarmSchedulerService {
 
   // Get next alarm time
   DateTime? getNextAlarmTime() {
-    final now = DateTime.now();
+    final now = _nowProvider();
     DateTime? nextAlarm;
     
     for (final alarm in _activeAlarms) {
@@ -195,8 +203,8 @@ class AlarmSchedulerService {
   String getNextAlarmString() {
     final nextAlarm = getNextAlarmTime();
     if (nextAlarm == null) return 'Brak zaplanowanych alarmów';
-    
-    final now = DateTime.now();
+
+    final now = _nowProvider();
     final difference = nextAlarm.difference(now);
     
     if (difference.inDays > 0) {
@@ -207,4 +215,41 @@ class AlarmSchedulerService {
       return 'Następny alarm: o ${nextAlarm.hour.toString().padLeft(2, '0')}:${nextAlarm.minute.toString().padLeft(2, '0')} (za ${difference.inMinutes} minut)';
     }
   }
-} 
+
+  @visibleForTesting
+  void setTestOverrides({
+    DateTime Function()? nowProvider,
+    void Function(AlarmSettings)? triggerHandler,
+    List<AlarmSettings>? activeAlarms,
+  }) {
+    if (nowProvider != null) {
+      _nowProvider = nowProvider;
+    }
+    if (triggerHandler != null) {
+      _alarmTriggerHandler = triggerHandler;
+    } else {
+      _alarmTriggerHandler = _defaultTriggerHandler;
+    }
+    if (activeAlarms != null) {
+      _activeAlarms = activeAlarms;
+    }
+  }
+
+  @visibleForTesting
+  void resetTestOverrides() {
+    _nowProvider = DateTime.now;
+    _alarmTriggerHandler = _defaultTriggerHandler;
+    _activeAlarms = [];
+    _triggeredAlarms.clear();
+  }
+
+  @visibleForTesting
+  void runManualCheck({required DateTime now}) {
+    _checkAlarms(nowOverride: now);
+  }
+
+  @visibleForTesting
+  void clearTriggeredCache() {
+    _triggeredAlarms.clear();
+  }
+}
