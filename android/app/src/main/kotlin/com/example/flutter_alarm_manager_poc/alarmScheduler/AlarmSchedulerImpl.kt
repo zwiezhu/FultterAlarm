@@ -34,6 +34,11 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putExtra("ALARM_MESSAGE", alarmItem.message)
             putExtra("ALARM_GAME_TYPE", alarmItem.gameType)
             putExtra("ALARM_DURATION_MINUTES", alarmItem.durationMinutes)
+            alarmItem.hour?.let { putExtra("ALARM_HOUR", it) }
+            alarmItem.minute?.let { putExtra("ALARM_MINUTE", it) }
+            if (alarmItem.selectedDays.isNotEmpty()) {
+                putExtra("ALARM_SELECTED_DAYS", alarmItem.selectedDays.toIntArray())
+            }
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -64,6 +69,9 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             putString("alarm_${alarmItem.id}_message", alarmItem.message)
             putString("alarm_${alarmItem.id}_game", alarmItem.gameType)
             putInt("alarm_${alarmItem.id}_duration", alarmItem.durationMinutes)
+            putInt("alarm_${alarmItem.id}_hour", alarmItem.hour ?: -1)
+            putInt("alarm_${alarmItem.id}_minute", alarmItem.minute ?: -1)
+            putString("alarm_${alarmItem.id}_days", alarmItem.selectedDays.joinToString(","))
             putBoolean("alarm_${alarmItem.id}_active", true)
             apply()
         }
@@ -96,6 +104,10 @@ class AlarmSchedulerImpl(private val context: Context) : AlarmScheduler {
             remove("alarm_${alarmItem.id}_message")
             remove("alarm_${alarmItem.id}_game")
             remove("alarm_${alarmItem.id}_active")
+            remove("alarm_${alarmItem.id}_duration")
+            remove("alarm_${alarmItem.id}_hour")
+            remove("alarm_${alarmItem.id}_minute")
+            remove("alarm_${alarmItem.id}_days")
             apply()
         }
         Log.d(TAG, "Alarm info removed from SharedPreferences")

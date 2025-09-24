@@ -135,17 +135,6 @@ class AlarmSchedulerService {
 
   void _defaultTriggerHandler(AlarmSettings alarm) {
     log('Triggering alarm:  [31m [1m${alarm.name} [0m at ${alarm.timeString} with game: ${alarm.gameType}');
-
-    // Schedule native Android alarm for better reliability
-    AlarmMethodChannel.scheduleNativeAlarm({
-      'id': alarm.id,
-      'name': alarm.name,
-      'hour': alarm.hour,
-      'minute': alarm.minute,
-      'gameType': alarm.gameType,
-      'durationMinutes': alarm.durationMinutes,
-      'selectedDays': alarm.selectedDays.toList(),
-    });
   }
 
   // Refresh alarms (called when alarms are added/removed/modified)

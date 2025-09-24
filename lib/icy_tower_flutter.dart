@@ -502,69 +502,57 @@ class _IcyTowerGameScreenState extends State<IcyTowerGameScreen> {
               width: gameWidth,
               height: gameHeight,
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Transform.translate(
-                    offset: Offset(0, cameraY),
-                    child: SizedBox(
-                      width: gameWidth,
-                      height: 4000,
-                      child: Stack(
-                        children: [
-                          ...platforms.map((platform) {
-                            final screenY = platform.y + cameraY;
-                            if (screenY < -100 || screenY > gameHeight + 100) {
-                              return const SizedBox.shrink();
-                            }
-                            return Positioned(
-                              left: platform.x,
-                              top: platform.y,
-                              child: Container(
-                                width: platform.width,
-                                height: platformHeight,
-                                decoration: BoxDecoration(
-                                  color: platform.color,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          Positioned(
-                            left: ball.x,
-                            top: ball.y,
-                            child: Container(
-                              width: ballSize,
-                              height: ballSize,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4ecdc4),
-                                borderRadius: BorderRadius.circular(8),
-                                border:
-                                Border.all(color: Colors.white, width: 2),
-                              ),
-                            ),
-                          ),
-                          ...particles.map((particle) {
-                            final screenY = particle.y + cameraY;
-                            if (screenY < -50 || screenY > gameHeight + 50) {
-                              return const SizedBox.shrink();
-                            }
-                            return Positioned(
-                              left: particle.x,
-                              top: particle.y,
-                              child: Container(
-                                width: 4,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: particle.color
-                                      .withOpacity(particle.life),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ],
+                  ...platforms.map((platform) {
+                    final screenY = platform.y + cameraY;
+                    if (screenY < -100 || screenY > gameHeight + 100) {
+                      return const SizedBox.shrink();
+                    }
+                    return Positioned(
+                      left: platform.x,
+                      top: screenY,
+                      child: Container(
+                        width: platform.width,
+                        height: platformHeight,
+                        decoration: BoxDecoration(
+                          color: platform.color,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  Positioned(
+                    left: ball.x,
+                    top: ball.y + cameraY,
+                    child: Container(
+                      width: ballSize,
+                      height: ballSize,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4ecdc4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                     ),
                   ),
+                  ...particles.map((particle) {
+                    final screenY = particle.y + cameraY;
+                    if (screenY < -50 || screenY > gameHeight + 50) {
+                      return const SizedBox.shrink();
+                    }
+                    return Positioned(
+                      left: particle.x,
+                      top: screenY,
+                      child: Container(
+                        width: 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: particle.color.withOpacity(particle.life),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ],
               ),
             ),

@@ -4,5 +4,8 @@ data class AlarmItem(
     val id: Int,
     val message: String,
     val gameType: String = "piano_tiles",
-    val durationMinutes: Int = 1
+    val durationMinutes: Int = 1,
+    val hour: Int? = null,
+    val minute: Int? = null,
+    val selectedDays: List<Int> = emptyList()
 )

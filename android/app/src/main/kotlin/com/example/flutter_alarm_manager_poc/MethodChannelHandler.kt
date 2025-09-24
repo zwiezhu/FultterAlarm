@@ -168,7 +168,10 @@ class MethodChannelHandler(private val context: Context) {
             id = id,
             message = name,
             gameType = gameType,
-            durationMinutes = durationMinutes
+            durationMinutes = durationMinutes,
+            hour = hour,
+            minute = minute,
+            selectedDays = selectedDays
         )
 
         val now = java.util.Calendar.getInstance()

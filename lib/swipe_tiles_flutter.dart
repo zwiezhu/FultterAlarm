@@ -95,8 +95,8 @@ class SwipeTilesGameScreen extends StatefulWidget {
 class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   // Game constants
   static const int cols = 4;
-  static const double tileSpeedStart = 2.4;
-  static const double tileSpeedInc = 0.09;
+  static const double tileSpeedStart = 3.6; // ~150% of previous baseline speed
+  static const double tileSpeedInc = 0.135;
   static const double minDistanceBetweenTiles = 200.0;
   
   // Game state
@@ -169,7 +169,7 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
       if (isPaused || gameOver) return;
       _addTile();
       setState(() {
-        tileSpeed = min(tileSpeed + tileSpeedInc, 7.5);
+        tileSpeed = min(tileSpeed + tileSpeedInc, 11.25);
       });
     });
   }
@@ -364,6 +364,9 @@ class _SwipeTilesGameScreenState extends State<SwipeTilesGameScreen> {
   }
 
   void _handleGameOver() {
+    if (gameOver) {
+      return;
+    }
     setState(() {
       gameOver = true;
       isPaused = true;
