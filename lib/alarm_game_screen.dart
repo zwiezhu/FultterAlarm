@@ -108,7 +108,7 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> with WidgetsBindingOb
     print('Alarm started at ${widget.alarmTime}');
   }
 
-  void _stopAlarm() async {
+  Future<void> _stopAlarm() async {
     print('AlarmGameScreen: _stopAlarm called');
     AppLogger.instance.log('Stop alarm sound');
     
@@ -120,6 +120,11 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> with WidgetsBindingOb
   void _startAlarmSystem() async {
     print('AlarmGameScreen: _startAlarmSystem called');
     AppLogger.instance.log('Start countdown');
+    
+    // CRITICAL: Stop any alarm sound that may already be playing from RingingService
+    // This ensures we start fresh and alarm won't play until user is inactive
+    await _stopAlarm();
+    AppLogger.instance.log('Stopped any existing alarm sound');
     
     // Start the 1-minute countdown
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -136,6 +141,9 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> with WidgetsBindingOb
 
     // Start inactivity timer
     _startInactivityTimer();
+    
+    // Trigger initial user interaction to prevent alarm from starting immediately
+    _handleUserInteraction();
   }
 
   void _startInactivityTimer() {
@@ -406,7 +414,9 @@ class _AlarmGameScreenState extends State<AlarmGameScreen> with WidgetsBindingOb
           gameCompleted: false,
         );
       case 'cave_lander':
-        return CaveLanderGameScreen();
+        return CaveLanderGameScreen(
+          onScoreChange: (score) => _handleUserInteraction(),
+        );
       case 'icy_tower':
         return IcyTowerGameScreen();
       case 'sky_tower':
